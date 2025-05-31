@@ -1,0 +1,53 @@
+#ifndef TYPES_H
+#define TYPES_H
+
+#include <Arduino.h>
+
+typedef unsigned long ulong;
+typedef unsigned int uint;
+
+struct RunningStatus
+{
+    bool isRunning;
+    String uuid;
+};
+
+struct DeviceStatus
+{
+    bool isRunning;
+    String uuid;
+    unsigned long uptime;
+    int temperatureSmoker;
+    int temperatureFood;
+    int temperatureTarget;
+    int fanPWM;
+    int doorPosition;
+    int RSSI;
+    int bars;
+};
+
+struct Configuration
+{
+    int temperatureTarget;
+    int temperatureIntervalMSec;
+    int forcedFanPWM;
+    bool isForcedFanPWM;
+    int forcedDoorPosition;
+    bool isForcedDoorPosition;
+    bool isPIDEnabled;
+    float kP;
+    float kI;
+    float kD;
+    int bangBangLowThreshold;
+    int bangBangHighThreshold;
+    int bangBangHysteresis;
+    int bangBangFanSpeed;
+    int doorOpenPosition;
+    int doorClosePosition;
+    float themometerSmokerGain;
+    float themometerSmokerOffset;
+    float themometerFoodGain;
+    float themometerFoodOffset;
+};
+
+#endif // TYPES_H
