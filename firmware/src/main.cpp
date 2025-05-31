@@ -26,7 +26,7 @@ Thermometer g_thermometerFood(DEFAULT_TEMPERATURE_INTERVAL_MSEC, PIN_THERMOMETER
 Door g_door(PIN_DOOR_SERVO, DEFAULT_DOOR_CLOSE_POSITION, DEFAULT_DOOR_OPEN_POSITION);
 
 // Blower motor definition
-Motor g_blowerMotor(PIN_BLOWER_PWM, PIN_BLOWER_A, PIN_BLOWER_B, PIN_BLOWER_ENABLE);
+Blower g_blowerMotor(PIN_BLOWER_PWM, PIN_BLOWER_A, PIN_BLOWER_B, PIN_BLOWER_ENABLE);
 
 int pos = 0;
 
@@ -62,8 +62,6 @@ void setup()
 
   // Initialize the blower motor
   g_blowerMotor.setID("Blower");
-  g_blowerMotor.setPWM(255);
-  g_blowerMotor.open(); // Open the blower motor
 
   // Blink LED to indicate startup
   pinMode(PIN_LED, OUTPUT);

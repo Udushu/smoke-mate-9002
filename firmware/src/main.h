@@ -10,7 +10,7 @@
 #include "nvram.h"
 #include "thermometer.h"
 #include "door.h"
-#include "motor.h"
+#include "blower.h"
 #include "tftdebug.h"
 #include "debug.h"
 

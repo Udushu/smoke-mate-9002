@@ -1,18 +1,18 @@
-#include "motor.h"
+#include "blower.h"
 
-Motor::Motor() : m_pinPWM(0), m_pinA(0), m_pinB(0) {}
+Blower::Blower() : m_pinPWM(0), m_pinA(0), m_pinB(0) {}
 
-Motor::Motor(uint pinPWM, uint pinA, uint pinB, uint enb) : m_pinPWM(pinPWM),
-                                                            m_pinA(pinA),
-                                                            m_pinB(pinB),
-                                                            m_pinEnb(enb)
+Blower::Blower(uint pinPWM, uint pinA, uint pinB, uint enb) : m_pinPWM(pinPWM),
+                                                              m_pinA(pinA),
+                                                              m_pinB(pinB),
+                                                              m_pinEnb(enb)
 {
     pinMode(m_pinPWM, OUTPUT);
     pinMode(m_pinA, OUTPUT);
     pinMode(m_pinB, OUTPUT);
     pinMode(m_pinEnb, OUTPUT);
 
-    m_state = MOTOR_STATE_IDLE;
+    m_state = BLOWER_STATE_IDLE;
     m_pwm = 255;
 
     // initialize the motor id with string of spaces
@@ -22,7 +22,7 @@ Motor::Motor(uint pinPWM, uint pinA, uint pinB, uint enb) : m_pinPWM(pinPWM),
     }
 }
 
-void Motor::open()
+void Blower::start()
 {
 #ifdef DEBUG_MOTOR
     // Print motor id string, function name and pwm value
@@ -34,10 +34,10 @@ void Motor::open()
     analogWrite(m_pinPWM, m_pwm);
     digitalWrite(m_pinA, HIGH);
     digitalWrite(m_pinB, LOW);
-    m_state = MOTOR_STATE_OPEN;
+    m_state = BLOWER_STATE_RUNNING;
 }
 
-void Motor::close()
+void Blower::stop()
 {
 #ifdef DEBUG_MOTOR
     // Print motor id string, function name and pwm value
@@ -49,10 +49,10 @@ void Motor::close()
     analogWrite(m_pinPWM, m_pwm);
     digitalWrite(m_pinA, LOW);
     digitalWrite(m_pinB, HIGH);
-    m_state = MOTOR_STATE_CLOSE;
+    m_state = BLOWER_STATE_STOPPED;
 }
 
-void Motor::stop()
+void Blower::stop()
 {
 #ifdef DEBUG_MOTOR
     // Print motor id string and function name
@@ -62,15 +62,15 @@ void Motor::stop()
     analogWrite(m_pinPWM, 0);
     digitalWrite(m_pinA, LOW);
     digitalWrite(m_pinB, LOW);
-    m_state = MOTOR_STATE_IDLE;
+    m_state = BLOWER_STATE_IDLE;
 }
 
-MotorState Motor::getState()
+BlowerState Blower::getState()
 {
     return m_state;
 }
 
-void Motor::setPWM(uint pwm)
+void Blower::setPWM(uint pwm)
 {
 #ifdef DEBUG_MOTOR
     Serial.print(m_id);
@@ -80,12 +80,12 @@ void Motor::setPWM(uint pwm)
     m_pwm = pwm;
 }
 
-uint Motor::getPWM()
+uint Blower::getPWM()
 {
     return m_pwm;
 }
 
-void Motor::setID(const char *id)
+void Blower::setID(const char *id)
 {
     strncpy(m_id, id, 12);
     m_id[12] = '\0';
