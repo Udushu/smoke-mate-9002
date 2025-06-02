@@ -243,9 +243,9 @@ static const SettingItem SETTINGS_LIST[] = {
     {"T_food Gain", getFoodGain, incFoodGain, decFoodGain},
     {"T_food Offset", getFoodOffset, incFoodOffset, decFoodOffset},
 
-    {"Manual Fan Contol", getIsForcedFan, incIsForcedFan, decIsForcedFan},
+    {"Manual Fan", getIsForcedFan, incIsForcedFan, decIsForcedFan},
     {"Forced Fan PWM", getForcedFanPWM, incForcedFanPWM, decForcedFanPWM},
-    {"Manual Door Control", getIsForcedDoor, incIsForcedDoor, decIsForcedDoor},
+    {"Manual Door", getIsForcedDoor, incIsForcedDoor, decIsForcedDoor},
     {"Forced Door Pos", getForcedDoorPos, incForcedDoorPos, decForcedDoorPos},
 
     {"Exit", nullptr, nullptr, nullptr}};
