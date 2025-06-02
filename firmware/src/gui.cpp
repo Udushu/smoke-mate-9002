@@ -1,7 +1,23 @@
 #include "gui.h"
 #include <math.h>
 
-SmokeMateGUI::SmokeMateGUI(Adafruit_ST7789 &displayRef) : tft(displayRef) {}
+// ========================================== PUBLIC METHODS ==========================================
+
+SmokeMateGUI::SmokeMateGUI(Adafruit_ST7789 &displayRef) : tft(displayRef)
+{
+    // Initialize the GUI state
+    m_guiState.header.state = GUI_STATE_HEADER_STATUS; // Start with the status header
+    m_guiState.header.isSelected = false;              // Start with no header selected
+    m_guiState.status.targetTempF = 0;
+    m_guiState.status.smokerTempF = 0;
+    m_guiState.status.foodTempF = 0;
+    m_guiState.isControllerRunning = false; // Start with controller not running
+    m_guiState.status.fanPercent = 0;       // Start with fan off
+    m_guiState.status.doorPercent = 0;      // Start with door closed
+    m_guiState.controllerStartTimeMSec = 0; // Start with zero controller start time
+    // Initialize the history
+    m_guiState.history.clear();
+}
 
 void SmokeMateGUI::begin()
 {
@@ -9,37 +25,37 @@ void SmokeMateGUI::begin()
     tft.fillScreen(COLOR_BG);
 }
 
-void SmokeMateGUI::service(GuiState &state, ulong currentTimeMSec)
+void SmokeMateGUI::service(ulong currentTimeMSec)
 {
 
     // Check if a transition from idle temperature controller to running has occurred
-    if (state.isControllerRunning && !m_isControllerRunning)
+    if (m_guiState.isControllerRunning && !m_isControllerRunning)
     {
         // Reset the history when the controller starts
-        state.history.clear();
+        m_guiState.history.clear();
         // Reset the last chart update time
         m_chartSampleIntervalMSec = GUI_CHART_UPDATE_INTERVAL_MSEC;
     }
 
-    if (state.isControllerRunning &&
+    if (m_guiState.isControllerRunning &&
         (currentTimeMSec - m_lastChartUpdateTimeMSec >= m_chartSampleIntervalMSec))
     {
         m_lastChartUpdateTimeMSec = currentTimeMSec;
         // Push the current state to the history
-        state.history.push_back({currentTimeMSec - state.controllerStartTimeMSec,
-                                 state.status.smokerTempF,
-                                 state.status.foodTempF,
-                                 state.status.targetTempF});
+        m_guiState.history.push_back({currentTimeMSec - m_guiState.controllerStartTimeMSec,
+                                      m_guiState.status.smokerTempF,
+                                      m_guiState.status.foodTempF,
+                                      m_guiState.status.targetTempF});
         // Deal with the temperature history queue, check for overflow
-        if (state.history.size() > GUI_MAX_HISTORY_ENTRIES)
+        if (m_guiState.history.size() > GUI_MAX_HISTORY_ENTRIES)
         {
             // Remove the oldest entry if the queue is full
             // state.history.pop_front();
 
             // Remove every second data point (keep even indices)
-            for (size_t i = 1; i < state.history.size();)
+            for (size_t i = 1; i < m_guiState.history.size();)
             {
-                state.history.erase(state.history.begin() + i);
+                m_guiState.history.erase(m_guiState.history.begin() + i);
                 ++i;
             }
             m_chartSampleIntervalMSec *= 2; // Double the interval
@@ -48,24 +64,24 @@ void SmokeMateGUI::service(GuiState &state, ulong currentTimeMSec)
     }
 
     // Update the controller running state
-    m_isControllerRunning = state.isControllerRunning;
+    m_isControllerRunning = m_guiState.isControllerRunning;
 
-    drawHeader(state.header);
-    drawFooter(state, currentTimeMSec - state.controllerStartTimeMSec);
+    drawHeader(m_guiState.header);
+    drawFooter(m_guiState, currentTimeMSec - m_guiState.controllerStartTimeMSec);
 
     // Draw the status panel or chart based on the header state
-    switch (state.header.state)
+    switch (m_guiState.header.state)
     {
     case GUI_STATE_HEADER_STATUS:
         m_isChartUpdateNeeded = true;
-        drawStausPanel(state.status);
+        drawStausPanel(m_guiState.status);
         break;
 
     case GUI_STATE_HEADER_CHART:
         if (m_isChartUpdateNeeded)
         {
             m_isChartUpdateNeeded = false; // Reset the flag after drawing
-            drawChart(state.history);
+            drawChart(m_guiState.history);
         }
         break;
 
@@ -81,8 +97,22 @@ void SmokeMateGUI::service(GuiState &state, ulong currentTimeMSec)
     m_isCommandQueued = false; // Reset the command queued flag after processing
 }
 
-void SmokeMateGUI::commandMoveNext(GuiStateHeader &header)
+void SmokeMateGUI::updateState(const ControllerStatus &controllerStatus)
 {
+    // Update the GUI state with the controller status
+    m_guiState.isControllerRunning = controllerStatus.isRunning;
+    m_guiState.status.smokerTempF = controllerStatus.temperatureSmoker;
+    m_guiState.status.foodTempF = controllerStatus.temperatureFood;
+    m_guiState.status.targetTempF = controllerStatus.temperatureTarget;
+    m_guiState.status.fanPercent = map(controllerStatus.fanPWM, 0, 255, 0, 100);
+    m_guiState.status.doorPercent = map(controllerStatus.doorPosition, 0, 180, 0, 100);
+    m_guiState.controllerStartTimeMSec = controllerStatus.controllerStartMSec;
+}
+
+void SmokeMateGUI::commandMoveNext()
+{
+    GuiStateHeader &header = m_guiState.header; // Reference to the current header state
+
     if (m_isCommandQueued)
     {
         return; // Ignore if a command is already queued
@@ -108,8 +138,9 @@ void SmokeMateGUI::commandMoveNext(GuiStateHeader &header)
     m_isCommandQueued = true; // Set the command as queued
 }
 
-void SmokeMateGUI::commandMovePrevious(GuiStateHeader &header)
+void SmokeMateGUI::commandMovePrevious()
 {
+    GuiStateHeader &header = m_guiState.header; // Reference to the current header state
     if (m_isCommandQueued)
     {
         return; // Ignore if a command is already queued
@@ -134,8 +165,9 @@ void SmokeMateGUI::commandMovePrevious(GuiStateHeader &header)
     m_isCommandQueued = true; // Set the command as queued
 }
 
-void SmokeMateGUI::commandSelect(GuiStateHeader &state)
+void SmokeMateGUI::commandSelect()
 {
+    GuiStateHeader &header = m_guiState.header; // Reference to the current header state
     if (m_isCommandQueued)
     {
         return; // Ignore if a command is already queued
@@ -143,6 +175,8 @@ void SmokeMateGUI::commandSelect(GuiStateHeader &state)
 
     m_isCommandQueued = true; // Set the command as queued
 }
+
+// ========================================== PRIVATE METHODS ==========================================
 
 void SmokeMateGUI::drawHeaderBlock(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
                                    uint16_t textOffset,

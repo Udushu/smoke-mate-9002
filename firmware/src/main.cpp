@@ -30,7 +30,6 @@ Blower g_blowerMotor(PIN_BLOWER_PWM, PIN_BLOWER_A, PIN_BLOWER_B, PIN_BLOWER_ENAB
 
 // Initalie the interface
 SmokeMateGUI g_smokeMateGUI(g_tftDisplay);
-GuiState g_guiState;
 
 // Device status
 ControllerStatus g_controllerStatus;
@@ -66,7 +65,6 @@ void setup()
   g_blowerMotor.setID("Blower");
 
   // Initalize the interface
-  setupInitializeGuiState(g_guiState);
   g_smokeMateGUI.begin();
 
   // Blink LED to indicate startup
@@ -128,13 +126,13 @@ void loop()
   if (g_knob.isRotatingUp())
   {
     // Increase the target temperature
-    g_smokeMateGUI.commandMoveNext(g_guiState.header);
+    g_smokeMateGUI.commandMoveNext();
   }
 
   if (g_knob.isRotatingDown())
   {
     // Decrease the target temperature
-    g_smokeMateGUI.commandMovePrevious(g_guiState.header);
+    g_smokeMateGUI.commandMovePrevious();
   }
 
   // Update the status variable of the controller
@@ -153,21 +151,9 @@ void loop()
     g_loopTimer500MSec = g_loopCurrentTimeMSec;
 
     // Update GUI state
-    updateGuiState(g_guiState, g_controllerStatus);
-    g_smokeMateGUI.service(g_guiState, g_loopCurrentTimeMSec);
+    g_smokeMateGUI.updateState(g_controllerStatus);
+    g_smokeMateGUI.service(g_loopCurrentTimeMSec);
   }
-}
-
-void updateGuiState(GuiState &guiState, const ControllerStatus &controllerStatus)
-{
-  // Update the GUI state with the controller status
-  guiState.isControllerRunning = controllerStatus.isRunning;
-  guiState.status.smokerTempF = controllerStatus.temperatureSmoker;
-  guiState.status.foodTempF = controllerStatus.temperatureFood;
-  guiState.status.targetTempF = controllerStatus.temperatureTarget;
-  guiState.status.fanPercent = map(controllerStatus.fanPWM, 0, 255, 0, 100);
-  guiState.status.doorPercent = map(controllerStatus.doorPosition, 0, 180, 0, 100);
-  guiState.controllerStartTimeMSec = controllerStatus.controllerStartMSec;
 }
 
 void setupInitializeControllerStatus(ControllerStatus &controllerStatus)
@@ -183,19 +169,6 @@ void setupInitializeControllerStatus(ControllerStatus &controllerStatus)
   controllerStatus.doorPosition = 0;                                      // Get initial door position
   controllerStatus.RSSI = 0;                                              // Start with zero RSSI
   controllerStatus.bars = 0;                                              // Start with zero bars
-}
-
-void setupInitializeGuiState(GuiState &guiState)
-{
-  guiState.header.state = GUI_STATE_HEADER_STATUS; // Start with status header active
-  guiState.header.isSelected = false;              // Start with no header selected
-  guiState.status.targetTempF = 0;
-  guiState.status.smokerTempF = 0;
-  guiState.status.foodTempF = 0;
-  guiState.isControllerRunning = true;  // Start with controller not running
-  guiState.status.fanPercent = 0;       // Start with fan off
-  guiState.status.doorPercent = 0;      // Start with door closed
-  guiState.controllerStartTimeMSec = 0; // Start with zero controller start time
 }
 
 void loadDefaultConfiguration(Configuration *ptr_configuration)

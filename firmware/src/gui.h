@@ -89,13 +89,24 @@ class SmokeMateGUI
 public:
     SmokeMateGUI(Adafruit_ST7789 &displayRef);
     void begin();
-    void service(GuiState &state, ulong currentTimeMSec);
+    void service(ulong currentTimeMSec);
 
-    void commandMoveNext(GuiStateHeader &state);
-    void commandMovePrevious(GuiStateHeader &state);
-    void commandSelect(GuiStateHeader &state);
+    void updateState(const ControllerStatus &controllerStatus);
+
+    void commandMoveNext();
+    void commandMovePrevious();
+    void commandSelect();
 
 private:
+    Adafruit_ST7789 &tft; // Reference to the display object
+    GuiState m_guiState;  // Current GUI state
+
+    bool m_isCommandQueued = false;                                   // Flag to indicate if a command is queued
+    bool m_isControllerRunning = false;                               // Flag to indicate if the controller is running
+    ulong m_lastChartUpdateTimeMSec = 0;                              // Last time the chart was updated
+    bool m_isChartUpdateNeeded = false;                               // Flag to indicate if chart update is needed
+    ulong m_chartSampleIntervalMSec = GUI_CHART_UPDATE_INTERVAL_MSEC; // Current sampling interval
+
     void drawHeader(const GuiStateHeader &state);
     void drawFooter(const GuiState &state, ulong controllerRunTimeMSec);
     void drawStausPanel(const GuiStateStatus &state);
@@ -107,13 +118,6 @@ private:
     void drawStatusBlock(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
                          const char *text);
     void drawStatusLine(uint16_t n, const char *label, const char *value);
-
-    Adafruit_ST7789 &tft;
-    bool m_isCommandQueued = false;                                   // Flag to indicate if a command is queued
-    bool m_isControllerRunning = false;                               // Flag to indicate if the controller is running
-    ulong m_lastChartUpdateTimeMSec = 0;                              // Last time the chart was updated
-    bool m_isChartUpdateNeeded = false;                               // Flag to indicate if chart update is needed
-    ulong m_chartSampleIntervalMSec = GUI_CHART_UPDATE_INTERVAL_MSEC; // Current sampling interval
 };
 
 #endif // GUI_H
