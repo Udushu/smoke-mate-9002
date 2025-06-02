@@ -92,6 +92,10 @@ void loop()
   // Service the door
   g_door.service(g_loopCurrentTimeMSec);
 
+  if (g_knob.isShortButtonPressed())
+  {
+    g_smokeMateGUI.commandSelect(); // Handle short button press
+  }
   // Check for the long press on the knob
   if (g_knob.isLongButtonPressed())
   {
@@ -108,11 +112,6 @@ void loop()
       // Stop the controller
       // g_blowerMotor.stop(); // Stop the blower motor
     }
-  }
-
-  if (g_knob.isShortButtonPressed())
-  {
-    g_smokeMateGUI.commandSelect(); // Handle short button press
   }
 
   if (g_knob.isUltraLongButtonPressed())
@@ -153,6 +152,11 @@ void loop()
     // Update GUI state
     g_smokeMateGUI.updateState(g_controllerStatus);
     g_smokeMateGUI.service(g_loopCurrentTimeMSec);
+    // Check if the gui requested NVRAM save
+    if (g_smokeMateGUI.isNVRAMSaveRequired())
+    {
+      g_nvram.writeNVRAM(); // Write the configuration to NVRAM
+    }
   }
 }
 

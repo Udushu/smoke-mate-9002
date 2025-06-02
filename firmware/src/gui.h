@@ -151,6 +151,8 @@ public:
     void commandMovePrevious();
     void commandSelect();
 
+    bool isNVRAMSaveRequired();
+
 private:
     Adafruit_ST7789 &m_tft;  // Reference to the display object
     GuiState m_guiState;     // Current GUI state
@@ -161,6 +163,7 @@ private:
     ulong m_lastChartUpdateTimeMSec = 0;                              // Last time the chart was updated
     bool m_isChartUpdateNeeded = false;                               // Flag to indicate if chart update is needed
     ulong m_chartSampleIntervalMSec = GUI_CHART_UPDATE_INTERVAL_MSEC; // Current sampling interval
+    bool m_isNVRAMSaveRequired = false;                               // Flag to indicate if NVRAM save is required
 
     void drawHeader(const GuiStateHeader &state);
     void drawFooter(const GuiState &state, ulong controllerRunTimeMSec);

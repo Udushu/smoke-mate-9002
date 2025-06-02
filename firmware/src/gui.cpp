@@ -523,6 +523,7 @@ void SmokeMateGUI::commandSelect()
     case GUI_STATE_HEADER_SETTINGS_EDIT_VALUE:
         header.state = GUI_STATE_HEADER_SETTINGS_EDIT; // Move back to settings edit state
         settings.editingIndex = -1;                    // Reset the editing index
+        m_isNVRAMSaveRequired = true;                  // Set the flag to indicate that NVRAM save is required
         break;
 
     default:
@@ -531,6 +532,17 @@ void SmokeMateGUI::commandSelect()
     }
 
     m_isCommandQueued = true; // Set the command as queued
+}
+
+bool SmokeMateGUI::isNVRAMSaveRequired()
+{
+    // Check if NVRAM save is required
+    if (m_isNVRAMSaveRequired)
+    {
+        m_isNVRAMSaveRequired = false; // Reset the flag after checking
+        return true;                   // Indicate that NVRAM save is required
+    }
+    return false; // No NVRAM save required
 }
 
 // ========================================== PRIVATE METHODS ==========================================
