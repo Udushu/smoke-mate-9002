@@ -11,11 +11,12 @@
 #include "thermometer.h"
 #include "door.h"
 #include "blower.h"
+#include "gui.h"
 #include "tftdebug.h"
 #include "debug.h"
 
 // ============================ COMPILATION FLAGS =========================
-#define DEBUG_MAIN
+// #define DEBUG_MAIN
 // #define NVRAM_DELETE_ON_STARTUP
 
 // ============================ CONSTANTS =================================
@@ -82,7 +83,10 @@
 
 // ============================= FUNCTIONS ===================================
 
+void updateGuiState(GuiState &guiState, const ControllerStatus &controllerStatus);
 void loadDefaultConfiguration(Configuration *ptr_configuration);
 void setupInitializeNVRAM();
+void setupInitializeGuiState(GuiState &guiState);
+void setupInitializeControllerStatus(ControllerStatus &controllerStatus);
 
 #endif // MAIN_H

@@ -28,7 +28,12 @@ Door g_door(PIN_DOOR_SERVO, DEFAULT_DOOR_CLOSE_POSITION, DEFAULT_DOOR_OPEN_POSIT
 // Blower motor definition
 Blower g_blowerMotor(PIN_BLOWER_PWM, PIN_BLOWER_A, PIN_BLOWER_B, PIN_BLOWER_ENABLE);
 
-int pos = 0;
+// Initalie the interface
+SmokeMateGUI g_smokeMateGUI(g_tftDisplay);
+GuiState g_guiState;
+
+// Device status
+ControllerStatus g_controllerStatus;
 
 void setup()
 {
@@ -37,12 +42,9 @@ void setup()
   SPI.begin(TFT_SCLK, -1, TFT_MOSI, TFT_CS);
 
   // Initalize TFT display
-  g_tftDisplay.init(240, 320); // Init ST7789 240x320
-  g_tftDisplay.setRotation(1); // Landscape
+  g_tftDisplay.init(240, 320);
+  g_tftDisplay.setRotation(1);
   g_tftDisplay.fillScreen(ST77XX_BLACK);
-  g_tftDisplay.setTextColor(ST77XX_WHITE);
-  g_tftDisplay.setTextSize(2);
-  g_tftDisplay.setCursor(10, 10);
 
   // Initialize debug output on TFT
   pinMode(TFT_BL, OUTPUT);
@@ -63,6 +65,10 @@ void setup()
   // Initialize the blower motor
   g_blowerMotor.setID("Blower");
 
+  // Initalize the interface
+  setupInitializeGuiState(g_guiState);
+  g_smokeMateGUI.begin();
+
   // Blink LED to indicate startup
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH); // Turn off LED
@@ -76,6 +82,8 @@ void loop()
   // Get the current time in milliseconds
   g_loopCurrentTimeMSec = millis();
 
+  // ====== SERVICE ALL COMPONENTS THAT RUN AT THE CPU RATE
+
   // Service the knob
   g_knob.service(g_loopCurrentTimeMSec);
 
@@ -85,6 +93,101 @@ void loop()
 
   // Service the door
   g_door.service(g_loopCurrentTimeMSec);
+
+  // Check for the long press on the knob
+  if (g_knob.isLongButtonPressed())
+  {
+    // Toggle the controller running state
+    g_controllerStatus.isRunning = !g_controllerStatus.isRunning;
+    if (g_controllerStatus.isRunning)
+    {
+      // Start the controller
+      g_controllerStatus.controllerStartMSec = g_loopCurrentTimeMSec;
+      // g_blowerMotor.start(); // Start the blower motor
+    }
+    else
+    {
+      // Stop the controller
+      // g_blowerMotor.stop(); // Stop the blower motor
+    }
+  }
+
+  if (g_knob.isShortButtonPressed())
+  {
+    // do nothing
+  }
+
+  if (g_knob.isRotatingUp())
+  {
+    // Increase the target temperature
+    g_smokeMateGUI.commandMoveNext(g_guiState);
+  }
+
+  if (g_knob.isRotatingDown())
+  {
+    // Decrease the target temperature
+    g_smokeMateGUI.commandMovePrevious(g_guiState);
+  }
+
+  // Update the status variable of the controller
+  g_controllerStatus.temperatureSmoker = g_thermometerSmoker.getTemperatureF();
+  g_controllerStatus.temperatureFood = g_thermometerFood.getTemperatureF();
+  g_controllerStatus.temperatureTarget = g_configuration.temperatureTarget;
+  g_controllerStatus.fanPWM = g_blowerMotor.getPWM();
+  g_controllerStatus.doorPosition = g_door.getPosition();
+  g_controllerStatus.RSSI = 0; // Placeholder for RSSI, update with actual value if available
+  g_controllerStatus.bars = 0; // Placeholder for bars, update with actual value if available
+  g_controllerStatus.uptime = g_loopCurrentTimeMSec;
+
+  // Check the 0.5 second timer
+  if (g_loopCurrentTimeMSec - g_loopTimer500MSec >= 500)
+  {
+    g_loopTimer500MSec = g_loopCurrentTimeMSec;
+
+    // Update GUI state
+    updateGuiState(g_guiState, g_controllerStatus);
+    g_smokeMateGUI.service(g_guiState, g_loopCurrentTimeMSec);
+  }
+}
+
+void updateGuiState(GuiState &guiState, const ControllerStatus &controllerStatus)
+{
+  // Update the GUI state with the controller status
+  guiState.isControllerRunning = controllerStatus.isRunning;
+  guiState.status.smokerTempF = controllerStatus.temperatureSmoker;
+  guiState.status.foodTempF = controllerStatus.temperatureFood;
+  guiState.status.targetTempF = controllerStatus.temperatureTarget;
+  guiState.status.fanPercent = map(controllerStatus.fanPWM, 0, 255, 0, 100);
+  guiState.status.doorPercent = map(controllerStatus.doorPosition, 0, 180, 0, 100);
+  guiState.controllerStartTimeMSec = controllerStatus.controllerStartMSec;
+}
+
+void setupInitializeControllerStatus(ControllerStatus &controllerStatus)
+{
+  controllerStatus.isRunning = false;                                     // Start with controller not running
+  controllerStatus.uuid = "00000000-0000-0000-0000-000000000000";         // Default UUID
+  controllerStatus.uptime = 0;                                            // Start with zero uptime
+  controllerStatus.controllerStartMSec = 0;                               // Set controller start time
+  controllerStatus.temperatureSmoker = 0;                                 // Start with zero smoker temperature
+  controllerStatus.temperatureFood = 0;                                   // Start with zero food temperature
+  controllerStatus.temperatureTarget = g_configuration.temperatureTarget; // Set target temperature from configuration
+  controllerStatus.fanPWM = 0;                                            // Start with fan off
+  controllerStatus.doorPosition = 0;                                      // Get initial door position
+  controllerStatus.RSSI = 0;                                              // Start with zero RSSI
+  controllerStatus.bars = 0;                                              // Start with zero bars
+}
+
+void setupInitializeGuiState(GuiState &guiState)
+{
+  guiState.headerState = GUI_STATE_HEADER_STATUS; // Start with status header active
+  guiState.isSelected = false;                    // Start with no header selected
+  guiState.status.targetTempF = 0;
+  guiState.status.smokerTempF = 0;
+  guiState.status.foodTempF = 0;
+  guiState.isControllerRunning = true;  // Start with controller not running
+  guiState.status.fanPercent = 0;       // Start with fan off
+  guiState.status.doorPercent = 0;      // Start with door closed
+  guiState.controllerStartTimeMSec = 0; // Start with zero controller start time
 }
 
 void loadDefaultConfiguration(Configuration *ptr_configuration)
