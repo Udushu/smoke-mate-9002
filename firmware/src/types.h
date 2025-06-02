@@ -12,11 +12,12 @@ struct RunningStatus
     String uuid;
 };
 
-struct DeviceStatus
+struct ControllerStatus
 {
     bool isRunning;
     String uuid;
-    unsigned long uptime;
+    ulong uptime;
+    ulong controllerStartMSec;
     int temperatureSmoker;
     int temperatureFood;
     int temperatureTarget;
