@@ -117,6 +117,14 @@ void loop()
     // do nothing
   }
 
+  if (g_knob.isUltraLongButtonPressed())
+  {
+    // Reset ESP32 and NVRAM
+    DEBUG_PRINTLN("Ultra long button press detected, resetting ESP32");
+    delay(1000);   // Wait for a second to ensure NVRAM is cleared
+    ESP.restart(); // Restart the ESP32
+  }
+
   if (g_knob.isRotatingUp())
   {
     // Increase the target temperature
