@@ -3,103 +3,141 @@
 
 // ========================================== SETTINGS GETTERS & SETTERS ==============================
 
+// TARGET TEMPERATURE =================================================================================
 static String getTargetTemp(const Configuration &c) { return String(c.temperatureTarget) + " F"; }
-static String getInterval(const Configuration &c) { return String(c.temperatureIntervalMSec / 1000) + " sec"; }
-static String getForcedFanPWM(const Configuration &c) { return String(c.forcedFanPWM); }
-static String getIsForcedFan(const Configuration &c) { return c.isForcedFanPWM ? "Yes" : "No"; }
-static String getForcedDoorPos(const Configuration &c) { return String(c.forcedDoorPosition); }
-static String getIsForcedDoor(const Configuration &c) { return c.isForcedDoorPosition ? "Yes" : "No"; }
-static String getPIDEnabled(const Configuration &c) { return c.isPIDEnabled ? "Yes" : "No"; }
-static String getKP(const Configuration &c) { return String(c.kP, 2); }
-static String getKI(const Configuration &c) { return String(c.kI, 2); }
-static String getKD(const Configuration &c) { return String(c.kD, 2); }
-static String getBangBangLow(const Configuration &c) { return String(c.bangBangLowThreshold); }
-static String getBangBangHigh(const Configuration &c) { return String(c.bangBangHighThreshold); }
-static String getBangBangHyst(const Configuration &c) { return String(c.bangBangHysteresis); }
-static String getBangBangFan(const Configuration &c) { return String(c.bangBangFanSpeed); }
-static String getDoorOpenPos(const Configuration &c) { return String(c.doorOpenPosition); }
-static String getDoorClosePos(const Configuration &c) { return String(c.doorClosePosition); }
-static String getSmokerGain(const Configuration &c) { return String(c.themometerSmokerGain, 2); }
-static String getSmokerOffset(const Configuration &c) { return String(c.themometerSmokerOffset, 2); }
-static String getFoodGain(const Configuration &c) { return String(c.themometerFoodGain, 2); }
-static String getFoodOffset(const Configuration &c) { return String(c.themometerFoodOffset, 2); }
-
-// --- Temperature-related increments/decrements (step: 5 degrees, with min/max) ---
-constexpr int TEMP_MIN = 0;
-constexpr int TEMP_MAX = 500;
-constexpr int TEMP_STEP = 5;
-
 void incTargetTemp(Configuration &c)
 {
-    if (c.temperatureTarget + TEMP_STEP <= TEMP_MAX)
-        c.temperatureTarget += TEMP_STEP;
+    if (c.temperatureTarget + GUI_SETTINGS_TEMP_STEP <= GUI_SETTINGS_TEMP_MAX)
+        c.temperatureTarget += GUI_SETTINGS_TEMP_STEP;
 }
 void decTargetTemp(Configuration &c)
 {
-    if (c.temperatureTarget - TEMP_STEP >= TEMP_MIN)
-        c.temperatureTarget -= TEMP_STEP;
+    if (c.temperatureTarget - GUI_SETTINGS_TEMP_STEP >= GUI_SETTINGS_TEMP_MIN)
+        c.temperatureTarget -= GUI_SETTINGS_TEMP_STEP;
 }
 
-void incBangBangLow(Configuration &c)
-{
-    if (c.bangBangLowThreshold + TEMP_STEP <= TEMP_MAX)
-        c.bangBangLowThreshold += TEMP_STEP;
-}
-void decBangBangLow(Configuration &c)
-{
-    if (c.bangBangLowThreshold - TEMP_STEP >= TEMP_MIN)
-        c.bangBangLowThreshold -= TEMP_STEP;
-}
-
-void incBangBangHigh(Configuration &c)
-{
-    if (c.bangBangHighThreshold + TEMP_STEP <= TEMP_MAX)
-        c.bangBangHighThreshold += TEMP_STEP;
-}
-void decBangBangHigh(Configuration &c)
-{
-    if (c.bangBangHighThreshold - TEMP_STEP >= TEMP_MIN)
-        c.bangBangHighThreshold -= TEMP_STEP;
-}
-
-void incBangBangHyst(Configuration &c)
-{
-    if (c.bangBangHysteresis + TEMP_STEP <= TEMP_MAX)
-        c.bangBangHysteresis += TEMP_STEP;
-}
-void decBangBangHyst(Configuration &c)
-{
-    if (c.bangBangHysteresis - TEMP_STEP >= TEMP_MIN)
-        c.bangBangHysteresis -= TEMP_STEP;
-}
-
-// --- Time interval (step: 1 second, min: 1s, max: 60s) ---
-constexpr ulong INTERVAL_MIN = 1000;
-constexpr ulong INTERVAL_MAX = 60000;
-
+// TEMPERATURE INTERVAL ==============================================================================
+static String getInterval(const Configuration &c) { return String(c.temperatureIntervalMSec / 1000) + " sec"; }
 void incInterval(Configuration &c)
 {
-    if (c.temperatureIntervalMSec + 1000 <= INTERVAL_MAX)
-        c.temperatureIntervalMSec += 1000;
+    if (c.temperatureIntervalMSec + GUI_SETTINGS_INTERVAL_STEP <= GUI_SETTINGS_INTERVAL_MAX)
+        c.temperatureIntervalMSec += GUI_SETTINGS_INTERVAL_STEP;
 }
 void decInterval(Configuration &c)
 {
-    if (c.temperatureIntervalMSec - 1000 >= INTERVAL_MIN)
-        c.temperatureIntervalMSec -= 1000;
+    if (c.temperatureIntervalMSec - GUI_SETTINGS_INTERVAL_STEP >= GUI_SETTINGS_INTERVAL_MIN)
+        c.temperatureIntervalMSec -= GUI_SETTINGS_INTERVAL_STEP;
 }
 
+// PID ENABLE SWITCH ==============================================================================
+static String getPIDEnabled(const Configuration &c) { return c.isPIDEnabled ? "Yes" : "No"; }
 void incPIDEnabled(Configuration &c) { c.isPIDEnabled = !c.isPIDEnabled; }
 void decPIDEnabled(Configuration &c) { c.isPIDEnabled = !c.isPIDEnabled; }
 
-void incKP(Configuration &c) { c.kP += 0.1f; }
-void decKP(Configuration &c) { c.kP -= 0.1f; }
+// PID K_PROPORTIONAL =============================================================================
+static String getKP(const Configuration &c) { return String(c.kP, GUI_SETTINGS_PID_K_DECIMAL_PLACES); }
+void incKP(Configuration &c)
+{
+    if (c.kP + GUI_SETTINGS_PID_K_STEP <= GUI_SETTINGS_PID_K_MAX)
+        c.kP += GUI_SETTINGS_PID_K_STEP;
+    else
+        c.kP = GUI_SETTINGS_PID_K_MAX;
+}
+void decKP(Configuration &c)
+{
+    if (c.kP - GUI_SETTINGS_PID_K_STEP >= GUI_SETTINGS_PID_K_MIN)
+        c.kP -= GUI_SETTINGS_PID_K_STEP;
+    else
+        c.kP = GUI_SETTINGS_PID_K_MIN;
+}
 
-void incKI(Configuration &c) { c.kI += 0.01f; }
-void decKI(Configuration &c) { c.kI -= 0.01f; }
+// PID K_INTEGRAL =================================================================================
+static String getKI(const Configuration &c) { return String(c.kI, GUI_SETTINGS_PID_K_DECIMAL_PLACES); }
+void incKI(Configuration &c)
+{
+    if (c.kI + GUI_SETTINGS_PID_K_STEP <= GUI_SETTINGS_PID_K_MAX)
+        c.kI += GUI_SETTINGS_PID_K_STEP;
+    else
+        c.kI = GUI_SETTINGS_PID_K_MAX;
+}
+void decKI(Configuration &c)
+{
+    if (c.kI - GUI_SETTINGS_PID_K_STEP >= GUI_SETTINGS_PID_K_MIN)
+        c.kI -= GUI_SETTINGS_PID_K_STEP;
+    else
+        c.kI = GUI_SETTINGS_PID_K_MIN;
+}
 
-void incKD(Configuration &c) { c.kD += 0.01f; }
-void decKD(Configuration &c) { c.kD -= 0.01f; }
+// PID K_DERIVATIVE ===============================================================================
+static String getKD(const Configuration &c) { return String(c.kD, GUI_SETTINGS_PID_K_DECIMAL_PLACES); }
+void incKD(Configuration &c)
+{
+    if (c.kD + GUI_SETTINGS_PID_K_STEP <= GUI_SETTINGS_PID_K_MAX)
+        c.kD += GUI_SETTINGS_PID_K_STEP;
+    else
+        c.kD = GUI_SETTINGS_PID_K_MAX;
+}
+void decKD(Configuration &c)
+{
+    if (c.kD - GUI_SETTINGS_PID_K_STEP >= GUI_SETTINGS_PID_K_MIN)
+        c.kD -= GUI_SETTINGS_PID_K_STEP;
+    else
+        c.kD = GUI_SETTINGS_PID_K_MIN;
+}
 
+// BANG BANG TEMPERATURE THRESHOLDS ===============================================================
+static String getBangBangBand(const Configuration &c) { return String(c.bangBangHighThreshold - c.bangBangLowThreshold) + " F"; }
+void incBangBangBand(Configuration &c)
+{
+    int band = c.bangBangHighThreshold - c.bangBangLowThreshold;
+    if (band + GUI_SETTINGS_TEMP_BB_BAND_STEP <= GUI_SETTINGS_TEMP_BB_BAND_MAX)
+    {
+        c.bangBangHighThreshold += GUI_SETTINGS_TEMP_BB_BAND_STEP;
+        c.bangBangLowThreshold -= GUI_SETTINGS_TEMP_BB_BAND_STEP;
+    }
+}
+void decBangBangBand(Configuration &c)
+{
+    int band = c.bangBangHighThreshold - c.bangBangLowThreshold;
+    if (band - GUI_SETTINGS_TEMP_BB_BAND_STEP >= GUI_SETTINGS_TEMP_BB_BAND_MIN)
+    {
+        c.bangBangHighThreshold -= GUI_SETTINGS_TEMP_BB_BAND_STEP;
+        c.bangBangLowThreshold += GUI_SETTINGS_TEMP_BB_BAND_STEP;
+    }
+}
+
+// BANG BANG HYSTERESIS ===========================================================================
+static String getBangBangHyst(const Configuration &c) { return String(c.bangBangHysteresis) + " F"; }
+void incBangBangHyst(Configuration &c)
+{
+    if (c.bangBangHysteresis + GUI_SETTINGS_TEMP_BB_BAND_STEP <= GUI_SETTINGS_TEMP_BB_BAND_MAX)
+        c.bangBangHysteresis += GUI_SETTINGS_TEMP_BB_BAND_STEP;
+}
+void decBangBangHyst(Configuration &c)
+{
+    if (c.bangBangHysteresis - GUI_SETTINGS_TEMP_BB_BAND_STEP >= GUI_SETTINGS_TEMP_BB_BAND_MIN)
+        c.bangBangHysteresis -= GUI_SETTINGS_TEMP_BB_BAND_STEP;
+}
+
+// BANG BANG FAN SPEED ============================================================================
+static String getBangBangFan(const Configuration &c) { return String(c.bangBangFanSpeed); }
+void incBangBangFan(Configuration &c)
+{
+    if (c.bangBangFanSpeed + GUI_SETTINGS_PWM_STEP <= GUI_SETTINGS_PWM_MAX)
+        c.bangBangFanSpeed += GUI_SETTINGS_PWM_STEP;
+    else
+        c.bangBangFanSpeed = GUI_SETTINGS_PWM_MAX;
+}
+void decBangBangFan(Configuration &c)
+{
+    if (c.bangBangFanSpeed - GUI_SETTINGS_PWM_STEP >= GUI_SETTINGS_PWM_MIN)
+        c.bangBangFanSpeed -= GUI_SETTINGS_PWM_STEP;
+    else
+        c.bangBangFanSpeed = GUI_SETTINGS_PWM_MIN;
+}
+
+// DOOR OPEN POSITION =============================================================================
+static String getDoorOpenPos(const Configuration &c) { return String(c.doorOpenPosition) + " deg"; }
 void incDoorOpenPos(Configuration &c)
 {
     if (c.doorOpenPosition < 180)
@@ -111,6 +149,8 @@ void decDoorOpenPos(Configuration &c)
         c.doorOpenPosition -= 1;
 }
 
+// DOOR CLOSE POSITION ============================================================================
+static String getDoorClosePos(const Configuration &c) { return String(c.doorClosePosition) + " deg"; }
 void incDoorClosePos(Configuration &c)
 {
     if (c.doorClosePosition < 180)
@@ -122,104 +162,94 @@ void decDoorClosePos(Configuration &c)
         c.doorClosePosition -= 1;
 }
 
+// SMOKER THEMOMETER CALIBRATION - GAIN ===========================================================
+static String getSmokerGain(const Configuration &c) { return String(c.themometerSmokerGain, 2); }
 void incSmokerGain(Configuration &c) { c.themometerSmokerGain += 0.01f; }
 void decSmokerGain(Configuration &c) { c.themometerSmokerGain -= 0.01f; }
 
+// SMOKER THEMOMETER CALIBRATION - OFFSET =========================================================
+static String getSmokerOffset(const Configuration &c) { return String(c.themometerSmokerOffset, 2); }
 void incSmokerOffset(Configuration &c) { c.themometerSmokerOffset += 0.1f; }
 void decSmokerOffset(Configuration &c) { c.themometerSmokerOffset -= 0.1f; }
 
+// FOOD THEMOMETER CALIBRATION - GAIN ============================================================
+static String getFoodGain(const Configuration &c) { return String(c.themometerFoodGain, 2); }
 void incFoodGain(Configuration &c) { c.themometerFoodGain += 0.01f; }
 void decFoodGain(Configuration &c) { c.themometerFoodGain -= 0.01f; }
 
+// FOOD THEMOMETER CALIBRATION - OFFSET ==========================================================
+static String getFoodOffset(const Configuration &c) { return String(c.themometerFoodOffset, 2); }
 void incFoodOffset(Configuration &c) { c.themometerFoodOffset += 0.1f; }
 void decFoodOffset(Configuration &c) { c.themometerFoodOffset -= 0.1f; }
 
-void incForcedFanPWM(Configuration &c)
-{
-    if (c.forcedFanPWM + 5 <= 255)
-        c.forcedFanPWM += 5;
-    else
-        c.forcedFanPWM = 255;
-}
-void decForcedFanPWM(Configuration &c)
-{
-    if (c.forcedFanPWM - 5 >= 0)
-        c.forcedFanPWM -= 5;
-    else
-        c.forcedFanPWM = 0;
-}
-
-void incBangBangFan(Configuration &c)
-{
-    if (c.bangBangFanSpeed + 5 <= 255)
-        c.bangBangFanSpeed += 5;
-    else
-        c.bangBangFanSpeed = 255;
-}
-void decBangBangFan(Configuration &c)
-{
-    if (c.bangBangFanSpeed - 5 >= 0)
-        c.bangBangFanSpeed -= 5;
-    else
-        c.bangBangFanSpeed = 0;
-}
-
+// ENABLE MANUAL FAN CONTROL ======================================================================
+static String getIsForcedFan(const Configuration &c) { return c.isForcedFanPWM ? "Yes" : "No"; }
 void incIsForcedFan(Configuration &c) { c.isForcedFanPWM = !c.isForcedFanPWM; }
 void decIsForcedFan(Configuration &c) { c.isForcedFanPWM = !c.isForcedFanPWM; }
 
+// SET MANUAL FAN PWM VALUE =======================================================================
+static String getForcedFanPWM(const Configuration &c) { return String(c.forcedFanPWM); }
+void incForcedFanPWM(Configuration &c)
+{
+    if (c.forcedFanPWM + GUI_SETTINGS_PWM_STEP <= GUI_SETTINGS_PWM_MAX)
+        c.forcedFanPWM += GUI_SETTINGS_PWM_STEP;
+    else
+        c.forcedFanPWM = GUI_SETTINGS_PWM_MAX;
+}
+void decForcedFanPWM(Configuration &c)
+{
+    if (c.forcedFanPWM - GUI_SETTINGS_PWM_STEP >= GUI_SETTINGS_PWM_MIN)
+        c.forcedFanPWM -= GUI_SETTINGS_PWM_STEP;
+    else
+        c.forcedFanPWM = GUI_SETTINGS_PWM_MIN;
+}
+
+// ENABLE MANUAL DOOR CONTROL =====================================================================
+static String getIsForcedDoor(const Configuration &c) { return c.isForcedDoorPosition ? "Yes" : "No"; }
+void incIsForcedDoor(Configuration &c) { c.isForcedDoorPosition = !c.isForcedDoorPosition; }
+void decIsForcedDoor(Configuration &c) { c.isForcedDoorPosition = !c.isForcedDoorPosition; }
+
+// SET MANUAL DOOR POSITION VALUE =================================================================
+static String getForcedDoorPos(const Configuration &c) { return String(c.forcedDoorPosition) + " deg"; }
 void incForcedDoorPos(Configuration &c)
 {
     if (c.forcedDoorPosition < 180)
         c.forcedDoorPosition += 1;
 }
-
 void decForcedDoorPos(Configuration &c)
 {
     if (c.forcedDoorPosition > 0)
         c.forcedDoorPosition -= 1;
 }
 
-void incIsForcedDoor(Configuration &c) { c.isForcedDoorPosition = !c.isForcedDoorPosition; }
-void decIsForcedDoor(Configuration &c) { c.isForcedDoorPosition = !c.isForcedDoorPosition; }
-
 static const SettingItem SETTINGS_LIST[] = {
-    {"Target Temp", getTargetTemp},
-    {"Interval", getInterval},
-    {"PID Enabled", getPIDEnabled},
-    {"kP", getKP},
-    {"kI", getKI},
-    {"kD", getKD},
-    {"BangBang Low", getBangBangLow},
-    {"BangBang High", getBangBangHigh},
-    {"BangBang Hyst", getBangBangHyst},
-    {"BangBang Fan", getBangBangFan},
-    {"Door Open Pos", getDoorOpenPos},
-    {"Door Close Pos", getDoorClosePos},
-    {"Smoker Gain", getSmokerGain},
-    {"Smoker Offset", getSmokerOffset},
-    {"Food Gain", getFoodGain},
-    {"Food Offset", getFoodOffset},
-    {"Forced Fan PWM", getForcedFanPWM},
-    {"Is Forced Fan", getIsForcedFan},
-    {"Forced Door Pos", getForcedDoorPos},
-    {"Is Forced Door", getIsForcedDoor},
-    {"Exit", nullptr}};
+    {"Target Temp", getTargetTemp, incTargetTemp, decTargetTemp},
+    {"Contol Interval", getInterval, incInterval, decInterval},
+
+    {"PID Enabled", getPIDEnabled, incPIDEnabled, decPIDEnabled},
+    {"PID kP", getKP, incKP, decKP},
+    {"PID kI", getKI, incKI, decKI},
+    {"PID kD", getKD, incKD, decKD},
+
+    {"BangBang Band", getBangBangBand, incBangBangBand, decBangBangBand},
+    {"BangBang Hyst", getBangBangHyst, incBangBangHyst, decBangBangHyst},
+    {"BangBang Fan PWM", getBangBangFan, incBangBangFan, decBangBangFan},
+
+    {"Door Open Pos", getDoorOpenPos, incDoorOpenPos, decDoorOpenPos},
+    {"Door Close Pos", getDoorClosePos, incDoorClosePos, decDoorClosePos},
+
+    {"T_smoker Gain", getSmokerGain, incSmokerGain, decSmokerGain},
+    {"T_smoker Offset", getSmokerOffset, incSmokerOffset, decSmokerOffset},
+    {"T_food Gain", getFoodGain, incFoodGain, decFoodGain},
+    {"T_food Offset", getFoodOffset, incFoodOffset, decFoodOffset},
+
+    {"Manual Fan Contol", getIsForcedFan, incIsForcedFan, decIsForcedFan},
+    {"Forced Fan PWM", getForcedFanPWM, incForcedFanPWM, decForcedFanPWM},
+    {"Manual Door Control", getIsForcedDoor, incIsForcedDoor, decIsForcedDoor},
+    {"Forced Door Pos", getForcedDoorPos, incForcedDoorPos, decForcedDoorPos},
+
+    {"Exit", nullptr, nullptr, nullptr}};
 static constexpr int SETTINGS_COUNT = sizeof(SETTINGS_LIST) / sizeof(SETTINGS_LIST[0]);
-
-typedef void (*SettingEditFunc)(Configuration &);
-
-SettingEditFunc incFuncs[] = {
-    incTargetTemp, incInterval, incPIDEnabled, incKP, incKI, incKD,
-    incBangBangLow, incBangBangHigh, incBangBangHyst, incBangBangFan,
-    incDoorOpenPos, incDoorClosePos, incSmokerGain, incSmokerOffset,
-    incFoodGain, incFoodOffset, incForcedFanPWM, incIsForcedFan,
-    incForcedDoorPos, incIsForcedDoor};
-SettingEditFunc decFuncs[] = {
-    decTargetTemp, decInterval, decPIDEnabled, decKP, decKI, decKD,
-    decBangBangLow, decBangBangHigh, decBangBangHyst, decBangBangFan,
-    decDoorOpenPos, decDoorClosePos, decSmokerGain, decSmokerOffset,
-    decFoodGain, decFoodOffset, decForcedFanPWM, decIsForcedFan,
-    decForcedDoorPos, decIsForcedDoor};
 
 // ========================================== PUBLIC METHODS ==========================================
 
@@ -383,7 +413,7 @@ void SmokeMateGUI::commandMoveNext()
         // Increment the value of the selected setting (not "Exit")
         if (settings.editingIndex >= 0 && settings.editingIndex < SETTINGS_COUNT - 1)
         {
-            incFuncs[settings.editingIndex](m_config);
+            SETTINGS_LIST[settings.editingIndex].incFunc(m_config);
         }
         break;
 
@@ -438,7 +468,7 @@ void SmokeMateGUI::commandMovePrevious()
         // Decrement the value of the selected setting (not "Exit")
         if (settings.editingIndex >= 0 && settings.editingIndex < SETTINGS_COUNT - 1)
         {
-            decFuncs[settings.editingIndex](m_config);
+            SETTINGS_LIST[settings.editingIndex].decFunc(m_config);
         }
         break;
     default:

@@ -51,8 +51,32 @@
 #define GUI_SETTINGS_PANEL_HEIGHT (GUI_FOOTER_OFFSET - GUI_HEADER_HEIGHT) // Height of the settings canvas
 #define GUI_SETTINGS_BLOCK_COUNT 8
 #define GUI_SETTINGS_BLOCK_HEIGHT (GUI_SETTINGS_PANEL_HEIGHT / GUI_SETTINGS_BLOCK_COUNT)
-#define GUI_SETTINGS_VALUE_OFFSET 220
-#define GUI_SETTINGS_LABEL_OFFSET 20 // Offset for the cursor in settings panel
+#define GUI_SETTINGS_VALUE_OFFSET 220 // Offset for the value in settings panel
+#define GUI_SETTINGS_LABEL_OFFSET 10  // Offset for the label in settings panel
+
+// --- Temperature settings edit constants
+#define GUI_SETTINGS_TEMP_MIN 100
+#define GUI_SETTINGS_TEMP_MAX 500
+#define GUI_SETTINGS_TEMP_STEP 5
+#define GUI_SETTINGS_TEMP_BB_BAND_STEP 1
+#define GUI_SETTINGS_TEMP_BB_BAND_MIN 1
+#define GUI_SETTINGS_TEMP_BB_BAND_MAX 50
+
+// --- Time interval (step: 1 second, min: 1s, max: 60s) ---
+#define GUI_SETTINGS_INTERVAL_MIN 1000
+#define GUI_SETTINGS_INTERVAL_MAX 60000
+#define GUI_SETTINGS_INTERVAL_STEP 1000
+
+// --- PWM settings edit constants
+#define GUI_SETTINGS_PWM_MIN 0
+#define GUI_SETTINGS_PWM_MAX 255
+#define GUI_SETTINGS_PWM_STEP 5
+
+// PID settings edit constants
+#define GUI_SETTINGS_PID_K_MIN 0.0f
+#define GUI_SETTINGS_PID_K_MAX 10.0f
+#define GUI_SETTINGS_PID_K_STEP 0.1f
+#define GUI_SETTINGS_PID_K_DECIMAL_PLACES 2 // Decimal places for PID settings
 
 enum GUI_STATE_ACTIVE_HEADER
 {
@@ -105,10 +129,13 @@ struct GuiState
 };
 
 // --- Settings metadata and helpers ---
+typedef void (*SettingEditFunc)(Configuration &);
 struct SettingItem
 {
-    const char *label;
-    String (*getValue)(const Configuration &);
+    const char *label;                         // Label for the setting
+    String (*getValue)(const Configuration &); // Function to get the setting value as a string
+    SettingEditFunc incFunc;                   // Function to increment the setting value
+    SettingEditFunc decFunc;                   // Function to decrement the setting value
 };
 
 class SmokeMateGUI
@@ -148,7 +175,5 @@ private:
                          const char *text);
     void drawStatusLine(uint16_t n, const char *label, const char *value);
 };
-
-
 
 #endif // GUI_H
