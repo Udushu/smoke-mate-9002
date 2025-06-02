@@ -11,75 +11,82 @@ Knob::Knob(int pinA, int pinB, int pinButton, ulong longPressTimeMSec, uint debo
     m_longPressTimeMSec = longPressTimeMSec;
 }
 
-
 void Knob::service(ulong currentTimeMSec)
 {
     m_encoder.service(currentTimeMSec);
     m_button.loop(); // MUST call the loop() function first
 
-
-    switch(m_state)
+    switch (m_state)
     {
-        case KNOB_STATE_IDLE:
-            
-            // Check if the button is pressed
-            if (m_button.isPressed())
+    case KNOB_STATE_IDLE:
+
+        // Check if the button is pressed
+        if (m_button.isPressed())
+        {
+            m_buttonPressedTimeMSec = currentTimeMSec;
+            m_state = KNOB_STATE_BUTTON_PRESSED;
+            break;
+        }
+        // Check if the encoder is rotating
+        if (m_encoder.getCount() > 1)
+        {
+            m_state = KNOB_STATE_ROTATING_UP;
+            break;
+        }
+        else if (m_encoder.getCount() < -1)
+        {
+            m_state = KNOB_STATE_ROTATING_DOWN;
+            break;
+        }
+        else
+        {
+            // No action, stay in idle state
+        }
+        break;
+
+    case KNOB_STATE_BUTTON_PRESSED:
+        // Check if the button is still pressed
+        if (m_button.isReleased())
+        {
+            // Check for long press
+            if (currentTimeMSec - m_buttonPressedTimeMSec >= m_longPressTimeMSec &&
+                currentTimeMSec - m_buttonPressedTimeMSec < KNOB_ULTRALONG_BUTTON_PRESS_TIME_MSEC)
             {
-                m_buttonPressedTimeMSec = currentTimeMSec;
-                m_state = KNOB_STATE_BUTTON_PRESSED;
-                break;
+                m_state = KNOB_STATE_LONG_BUTTON_PRESSED;
             }
-            // Check if the encoder is rotating
-            if (m_encoder.getCount() > 1)
+            else if (currentTimeMSec - m_buttonPressedTimeMSec >= KNOB_ULTRALONG_BUTTON_PRESS_TIME_MSEC)
             {
-                m_state = KNOB_STATE_ROTATING_UP;
-                break;
-            }
-            else if (m_encoder.getCount() < -1)
-            {
-                m_state = KNOB_STATE_ROTATING_DOWN;
-                break;
+                m_state = KNOB_STATE_ULTRA_LONG_BUTTON_PRESSED;
             }
             else
             {
-                // No action, stay in idle state
+                m_state = KNOB_STATE_SHORT_BUTTON_PRESSED;
             }
-            break;
+        }
+        break;
 
-        case KNOB_STATE_BUTTON_PRESSED:
-            // Check if the button is still pressed
-            if (m_button.isReleased())
-            {
-                // Check for long press
-                if (currentTimeMSec - m_buttonPressedTimeMSec >= m_longPressTimeMSec)
-                {
-                    m_state = KNOB_STATE_LONG_BUTTON_PRESSED;
-                }
-                else
-                {
-                    m_state = KNOB_STATE_SHORT_BUTTON_PRESSED;
-                }
-            }
-            break;
+    case KNOB_STATE_SHORT_BUTTON_PRESSED:
 
-        case KNOB_STATE_SHORT_BUTTON_PRESSED:
+        // Do nothing, just wait for the reset
+        break;
 
-            // Do nothing, just wait for the reset
-            break;
+    case KNOB_STATE_LONG_BUTTON_PRESSED:
 
-        case KNOB_STATE_LONG_BUTTON_PRESSED:
-           
-            // Do nothing, just wait for the reset
-            break;
+        // Do nothing, just wait for the reset
+        break;
 
-        case KNOB_STATE_ROTATING_UP:
-           
-            // Do nothing, just wait for the reset
-            break;
+    case KNOB_STATE_ULTRA_LONG_BUTTON_PRESSED:
+        // Do nothing, just wait for the reset
+        break;
 
-        case KNOB_STATE_ROTATING_DOWN:
-            // Do nothing, just wait for the reset
-            break;
+    case KNOB_STATE_ROTATING_UP:
+
+        // Do nothing, just wait for the reset
+        break;
+
+    case KNOB_STATE_ROTATING_DOWN:
+        // Do nothing, just wait for the reset
+        break;
     }
 }
 
@@ -103,6 +110,16 @@ bool Knob::isShortButtonPressed()
 bool Knob::isLongButtonPressed()
 {
     if (m_state == KNOB_STATE_LONG_BUTTON_PRESSED)
+    {
+        reset();
+        return true;
+    }
+    return false;
+}
+
+bool Knob::isUltraLongButtonPressed()
+{
+    if (m_state == KNOB_STATE_ULTRA_LONG_BUTTON_PRESSED)
     {
         reset();
         return true;
