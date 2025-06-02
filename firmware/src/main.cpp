@@ -112,7 +112,7 @@ void loop()
 
   if (g_knob.isShortButtonPressed())
   {
-    // do nothing
+    g_smokeMateGUI.commandSelect(); // Handle short button press
   }
 
   if (g_knob.isUltraLongButtonPressed())
