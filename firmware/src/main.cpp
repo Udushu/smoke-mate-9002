@@ -117,9 +117,11 @@ void loop()
   if (g_knob.isUltraLongButtonPressed())
   {
     // Reset ESP32 and NVRAM
-    DEBUG_PRINTLN("Ultra long button press detected, resetting ESP32");
-    delay(1000);   // Wait for a second to ensure NVRAM is cleared
-    ESP.restart(); // Restart the ESP32
+    g_tftDisplay.fillScreen(ST77XX_BLACK); // Clear the display
+    DEBUG_PRINTLN("Ultra long button press detected, clearing NVRAM resetting ESP32");
+    g_nvram.clearNVRAM(); // Clear NVRAM
+    delay(1000);          // Wait for a second to ensure NVRAM is cleared
+    ESP.restart();        // Restart the ESP32
   }
 
   if (g_knob.isRotatingUp())
