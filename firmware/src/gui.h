@@ -87,7 +87,7 @@ struct GuiState
 class SmokeMateGUI
 {
 public:
-    SmokeMateGUI(Adafruit_ST7789 &displayRef);
+    SmokeMateGUI(Adafruit_ST7789 &displayRef, Configuration &config);
     void begin();
     void service(ulong currentTimeMSec);
 
@@ -98,8 +98,9 @@ public:
     void commandSelect();
 
 private:
-    Adafruit_ST7789 &tft; // Reference to the display object
-    GuiState m_guiState;  // Current GUI state
+    Adafruit_ST7789 &m_tft;  // Reference to the display object
+    GuiState m_guiState;     // Current GUI state
+    Configuration &m_config; // Reference to the configuration object
 
     bool m_isCommandQueued = false;                                   // Flag to indicate if a command is queued
     bool m_isControllerRunning = false;                               // Flag to indicate if the controller is running

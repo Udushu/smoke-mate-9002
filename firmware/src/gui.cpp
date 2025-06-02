@@ -3,7 +3,8 @@
 
 // ========================================== PUBLIC METHODS ==========================================
 
-SmokeMateGUI::SmokeMateGUI(Adafruit_ST7789 &displayRef) : tft(displayRef)
+SmokeMateGUI::SmokeMateGUI(Adafruit_ST7789 &displayRef, Configuration &config) : m_tft(displayRef),
+                                                                                 m_config(config)
 {
     // Initialize the GUI state
     m_guiState.header.state = GUI_STATE_HEADER_STATUS; // Start with the status header
@@ -21,8 +22,8 @@ SmokeMateGUI::SmokeMateGUI(Adafruit_ST7789 &displayRef) : tft(displayRef)
 
 void SmokeMateGUI::begin()
 {
-    tft.setRotation(1); // Landscape
-    tft.fillScreen(COLOR_BG);
+    m_tft.setRotation(1); // Landscape
+    m_tft.fillScreen(COLOR_BG);
 }
 
 void SmokeMateGUI::service(ulong currentTimeMSec)
@@ -89,7 +90,7 @@ void SmokeMateGUI::service(ulong currentTimeMSec)
         m_isChartUpdateNeeded = true;
         // do nothing for now, settings panel is not implemented
         // draw black rectangle to clear the area
-        tft.fillRect(0, GUI_HEADER_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - GUI_HEADER_HEIGHT - GUI_FOOTER_HEIGHT, COLOR_BG);
+        m_tft.fillRect(0, GUI_HEADER_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - GUI_HEADER_HEIGHT - GUI_FOOTER_HEIGHT, COLOR_BG);
         break;
     }
     // drawChart(state.smokerHistory, state.foodHistory);
@@ -189,11 +190,11 @@ void SmokeMateGUI::drawHeaderBlock(uint16_t x, uint16_t y, uint16_t width, uint1
         bgColor = COLOR_HEADER_SELECTED;
     }
 
-    tft.fillRect(x, y, width, height, bgColor);
-    tft.setTextSize(2);
-    tft.setTextColor(COLOR_TEXT);
-    tft.setCursor(x + textOffset, y + 13);
-    tft.print(text);
+    m_tft.fillRect(x, y, width, height, bgColor);
+    m_tft.setTextSize(2);
+    m_tft.setTextColor(COLOR_TEXT);
+    m_tft.setCursor(x + textOffset, y + 13);
+    m_tft.print(text);
 }
 
 void SmokeMateGUI::drawHeader(const GuiStateHeader &header)
@@ -219,38 +220,38 @@ void SmokeMateGUI::drawFooter(const GuiState &state, ulong elapsedMillis)
     if (state.isControllerRunning)
     {
 
-        tft.fillRect(0, GUI_FOOTER_OFFSET, SCREEN_WIDTH, GUI_FOOTER_HEIGHT, COLOR_HEADER_ACTIVE);
-        tft.setTextSize(2);
-        tft.setTextColor(COLOR_TEXT);
+        m_tft.fillRect(0, GUI_FOOTER_OFFSET, SCREEN_WIDTH, GUI_FOOTER_HEIGHT, COLOR_HEADER_ACTIVE);
+        m_tft.setTextSize(2);
+        m_tft.setTextColor(COLOR_TEXT);
 
-        tft.setCursor(6, GUI_FOOTER_OFFSET + 2);
-        tft.print("Running");
+        m_tft.setCursor(6, GUI_FOOTER_OFFSET + 2);
+        m_tft.print("Running");
 
         // Display the elapsed time in HH:MM:SS format
-        tft.setCursor(SCREEN_WIDTH / 2 + 40, GUI_FOOTER_OFFSET + 2);
+        m_tft.setCursor(SCREEN_WIDTH / 2 + 40, GUI_FOOTER_OFFSET + 2);
 
         unsigned long totalSeconds = elapsedMillis / 1000;
         unsigned long hours = totalSeconds / 3600;
         unsigned long minutes = (totalSeconds % 3600) / 60;
         unsigned long seconds = totalSeconds % 60;
         snprintf(timeStr, sizeof(timeStr), "%02lu:%02lu:%02lu", hours, minutes, seconds);
-        tft.print(timeStr);
+        m_tft.print(timeStr);
     }
     else
     {
 
-        tft.fillRect(0, GUI_FOOTER_OFFSET, SCREEN_WIDTH, GUI_FOOTER_HEIGHT, COLOR_HEADER_PASSIVE);
-        tft.setTextSize(2);
-        tft.setTextColor(COLOR_TEXT);
+        m_tft.fillRect(0, GUI_FOOTER_OFFSET, SCREEN_WIDTH, GUI_FOOTER_HEIGHT, COLOR_HEADER_PASSIVE);
+        m_tft.setTextSize(2);
+        m_tft.setTextColor(COLOR_TEXT);
 
-        tft.setCursor(6, GUI_FOOTER_OFFSET + 2);
-        tft.print("Idle");
+        m_tft.setCursor(6, GUI_FOOTER_OFFSET + 2);
+        m_tft.print("Idle");
 
         // Display the elapsed time in HH:MM:SS format
-        tft.setCursor(SCREEN_WIDTH / 2 + 40, GUI_FOOTER_OFFSET + 2);
+        m_tft.setCursor(SCREEN_WIDTH / 2 + 40, GUI_FOOTER_OFFSET + 2);
 
         snprintf(timeStr, sizeof(timeStr), "00:00:00");
-        tft.print(timeStr);
+        m_tft.print(timeStr);
     }
 
     // Additional footer information can be added here
@@ -316,11 +317,11 @@ void SmokeMateGUI::drawStatusLine(uint16_t n, const char *label, const char *val
 
 void SmokeMateGUI::drawStatusBlock(uint16_t x, uint16_t y, uint16_t width, uint16_t height, const char *text)
 {
-    tft.fillRect(x, y, width, height, COLOR_BG);
-    tft.setTextSize(3);
-    tft.setTextColor(COLOR_TEXT);
-    tft.setCursor(x + 6, y + 6);
-    tft.print(text);
+    m_tft.fillRect(x, y, width, height, COLOR_BG);
+    m_tft.setTextSize(3);
+    m_tft.setTextColor(COLOR_TEXT);
+    m_tft.setCursor(x + 6, y + 6);
+    m_tft.print(text);
 }
 
 void SmokeMateGUI::drawChart(const std::deque<TemperatureHistoryEntry> &history)
@@ -331,15 +332,15 @@ void SmokeMateGUI::drawChart(const std::deque<TemperatureHistoryEntry> &history)
     const int height = GUI_CHART_PANEL_HEIGHT - 30;
 
     // Clear the chart area as defined by the chart panel
-    tft.fillRect(0, GUI_CHART_PANEL_Y_OFFSET, SCREEN_WIDTH, GUI_CHART_PANEL_HEIGHT, COLOR_BG);
+    m_tft.fillRect(0, GUI_CHART_PANEL_Y_OFFSET, SCREEN_WIDTH, GUI_CHART_PANEL_HEIGHT, COLOR_BG);
 
     // Draw chart background and border
-    tft.drawRect(chartX, chartY, width, height, ST77XX_WHITE);
+    m_tft.drawRect(chartX, chartY, width, height, ST77XX_WHITE);
 
     // Title
-    tft.setCursor(chartX, chartY - 12);
-    tft.setTextColor(ST77XX_WHITE);
-    tft.setTextSize(2);
+    m_tft.setCursor(chartX, chartY - 12);
+    m_tft.setTextColor(ST77XX_WHITE);
+    m_tft.setTextSize(2);
 
     if (history.size() < 2)
         return;
@@ -372,20 +373,20 @@ void SmokeMateGUI::drawChart(const std::deque<TemperatureHistoryEntry> &history)
     }
 
     // --- Draw Y axis (Temperature) ---
-    tft.setTextSize(1);
-    tft.setTextColor(ST77XX_WHITE);
+    m_tft.setTextSize(1);
+    m_tft.setTextColor(ST77XX_WHITE);
     int yTicks = 5;
     for (int i = 0; i <= yTicks; ++i)
     {
         int temp = minT + (maxT - minT) * i / yTicks;
         int y = chartY + height - ((height - 1) * i) / yTicks;
-        tft.drawFastHLine(chartX, y, 4, ST77XX_WHITE); // Tick
-        tft.setCursor(chartX - 20, y - 4);
-        tft.printf("%3d", temp);
+        m_tft.drawFastHLine(chartX, y, 4, ST77XX_WHITE); // Tick
+        m_tft.setCursor(chartX - 20, y - 4);
+        m_tft.printf("%3d", temp);
     }
     // Y-axis label
-    tft.setCursor(chartX - 32, chartY + height / 2 - 8);
-    tft.print("F");
+    m_tft.setCursor(chartX - 32, chartY + height / 2 - 8);
+    m_tft.print("F");
 
     // --- Draw X axis (Time in minutes or hours) ---
     int xTicks = 5;
@@ -396,7 +397,7 @@ void SmokeMateGUI::drawChart(const std::deque<TemperatureHistoryEntry> &history)
     {
         ulong t = minTime + (durationMSec * i) / xTicks;
         int x = chartX + ((width - 1) * i) / xTicks;
-        tft.drawFastVLine(x, chartY + height - 4, 4, ST77XX_WHITE); // Tick
+        m_tft.drawFastVLine(x, chartY + height - 4, 4, ST77XX_WHITE); // Tick
 
         int cursorOffset = 0;
         if (i == 0)
@@ -411,61 +412,61 @@ void SmokeMateGUI::drawChart(const std::deque<TemperatureHistoryEntry> &history)
         {
             cursorOffset = -10;
         }
-        tft.setCursor(x + cursorOffset, chartY + height + 2);
+        m_tft.setCursor(x + cursorOffset, chartY + height + 2);
         if (showHours)
         {
             float hours = t / 3600000.0f;
-            tft.printf("%.2f", hours);
+            m_tft.printf("%.2f", hours);
         }
         else
         {
             float minutes = t / 60000.0f;
-            tft.printf("%.1f", minutes);
+            m_tft.printf("%.1f", minutes);
         }
     }
     // X-axis label
-    tft.setCursor(chartX + width - 24, chartY + height - 20);
+    m_tft.setCursor(chartX + width - 24, chartY + height - 20);
     if (showHours)
     {
-        tft.print("hrs");
+        m_tft.print("hrs");
     }
     else
     {
-        tft.print("min");
+        m_tft.print("min");
     }
 
     // Y gridlines
     for (int i = 1; i < yTicks; ++i)
     {
         int y = chartY + height - ((height - 1) * i) / yTicks;
-        tft.drawFastHLine(chartX + 1, y, width - 2, COLOR_CHART_GRIDLINES);
+        m_tft.drawFastHLine(chartX + 1, y, width - 2, COLOR_CHART_GRIDLINES);
     }
 
     // X gridlines
     for (int i = 1; i < xTicks; ++i)
     {
         int x = chartX + ((width - 1) * i) / xTicks;
-        tft.drawFastVLine(x, chartY + 1, height - 2, COLOR_CHART_GRIDLINES);
+        m_tft.drawFastVLine(x, chartY + 1, height - 2, COLOR_CHART_GRIDLINES);
     }
 
     // --- Draw Legend (top right corner) ---
     int legendX = chartX + width - 50;
     int legendY = chartY + 8;
-    tft.setTextSize(1);
+    m_tft.setTextSize(1);
 
-    tft.setCursor(legendX, legendY);
-    tft.setTextColor(COLOR_CHART_SMOKER);
-    tft.print("Smoker");
+    m_tft.setCursor(legendX, legendY);
+    m_tft.setTextColor(COLOR_CHART_SMOKER);
+    m_tft.print("Smoker");
 
-    tft.setCursor(legendX, legendY + 12);
-    tft.setTextColor(COLOR_CHART_FOOD);
-    tft.print("Food");
+    m_tft.setCursor(legendX, legendY + 12);
+    m_tft.setTextColor(COLOR_CHART_FOOD);
+    m_tft.print("Food");
 
-    tft.setCursor(legendX, legendY + 24);
-    tft.setTextColor(COLOR_CHART_TARGET);
-    tft.print("Target");
+    m_tft.setCursor(legendX, legendY + 24);
+    m_tft.setTextColor(COLOR_CHART_TARGET);
+    m_tft.print("Target");
 
-    tft.setTextColor(ST77XX_WHITE); // Reset to default for other text
+    m_tft.setTextColor(ST77XX_WHITE); // Reset to default for other text
 
     // Draw lines for smoker, food, and target temps
     for (size_t i = 1; i < history.size(); ++i)
@@ -489,14 +490,14 @@ void SmokeMateGUI::drawChart(const std::deque<TemperatureHistoryEntry> &history)
         int yFood = chartY + height - 1 - ((history[i].foodTempF - minT) * (height - 1)) / (maxT - minT);
         // int yTarget = chartY + height - 1 - ((history[i].targetTempF - minT) * (height - 1)) / (maxT - minT);
 
-        tft.drawLine(x0, y0s, x1, y1s, COLOR_CHART_SMOKER); // Smoker temp
-        tft.fillCircle(x, ySmoker, 2, COLOR_CHART_SMOKER);
+        m_tft.drawLine(x0, y0s, x1, y1s, COLOR_CHART_SMOKER); // Smoker temp
+        m_tft.fillCircle(x, ySmoker, 2, COLOR_CHART_SMOKER);
         // tft.drawLine(x0, y0s - 1, x1, y1s - 1, COLOR_CHART_SMOKER); // Smoker temp
         // tft.drawLine(x0, y0s + 1, x1, y1s + 1, COLOR_CHART_SMOKER); // Smoker temp
-        tft.drawLine(x0, y0f, x1, y1f, COLOR_CHART_FOOD); // Food temp
-        tft.fillCircle(x, yFood, 2, COLOR_CHART_FOOD);
+        m_tft.drawLine(x0, y0f, x1, y1f, COLOR_CHART_FOOD); // Food temp
+        m_tft.fillCircle(x, yFood, 2, COLOR_CHART_FOOD);
         // tft.drawLine(x0, y0f - 1, x1, y1f - 1, COLOR_CHART_FOOD);   // Food temp
         // tft.drawLine(x0, y0f + 1, x1, y1f + 1, COLOR_CHART_FOOD);   // Food temp
-        tft.drawLine(x0, y0t, x1, y1t, COLOR_CHART_TARGET); // Target temp
+        m_tft.drawLine(x0, y0t, x1, y1t, COLOR_CHART_TARGET); // Target temp
     }
 }

@@ -29,7 +29,7 @@ Door g_door(PIN_DOOR_SERVO, DEFAULT_DOOR_CLOSE_POSITION, DEFAULT_DOOR_OPEN_POSIT
 Blower g_blowerMotor(PIN_BLOWER_PWM, PIN_BLOWER_A, PIN_BLOWER_B, PIN_BLOWER_ENABLE);
 
 // Initalie the interface
-SmokeMateGUI g_smokeMateGUI(g_tftDisplay);
+SmokeMateGUI g_smokeMateGUI(g_tftDisplay, g_configuration);
 
 // Device status
 ControllerStatus g_controllerStatus;
