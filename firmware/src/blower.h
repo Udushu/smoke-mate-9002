@@ -30,7 +30,7 @@ public:
     Blower(uint pinPWM, uint pinA, uint pinB, uint enb);
     void start();
     void stop();
-    void stop();
+    // void stop();
     BlowerState getState();
     void setPWM(uint pwm);
     uint getPWM();

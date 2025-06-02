@@ -52,18 +52,18 @@ void Blower::stop()
     m_state = BLOWER_STATE_STOPPED;
 }
 
-void Blower::stop()
-{
-#ifdef DEBUG_MOTOR
-    // Print motor id string and function name
-    Serial.print(m_id);
-    Serial.println(" Motor::stop()");
-#endif
-    analogWrite(m_pinPWM, 0);
-    digitalWrite(m_pinA, LOW);
-    digitalWrite(m_pinB, LOW);
-    m_state = BLOWER_STATE_IDLE;
-}
+// void Blower::stop()
+// {
+// #ifdef DEBUG_MOTOR
+//     // Print motor id string and function name
+//     Serial.print(m_id);
+//     Serial.println(" Motor::stop()");
+// #endif
+//     analogWrite(m_pinPWM, 0);
+//     digitalWrite(m_pinA, LOW);
+//     digitalWrite(m_pinB, LOW);
+//     m_state = BLOWER_STATE_IDLE;
+// }
 
 BlowerState Blower::getState()
 {
