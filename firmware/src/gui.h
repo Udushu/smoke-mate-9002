@@ -2,14 +2,13 @@
 #define GUI_H
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
-// #include <Fonts/FreeSans9pt7b.h>
-// #include <Fonts/FreeMono12pt7b.h>
-// #include <Fonts/FreeMono9pt7b.h>
+#include "types.h"
 
 #include <deque>
 
-#define GUI_MAX_HISTORY_ENTRIES 50              // Maximum number of temperature history entries to keep
-#define GUI_CHART_UPDATE_INTERVAL_MSEC 1 * 1000 // Interval to update the history in milliseconds
+#define GUI_MAX_HISTORY_ENTRIES 1800                      // Maximum number of temperature history entries to keep
+#define GUI_CHART_UPDATE_INTERVAL_MSEC 2 * 1000           // Interval to update the history in milliseconds
+#define GUI_CHART_MIN2HOUR_SWITCH_MSEC 2 * 60 * 60 * 1000 // Switch to 2-hour chart mode after this time
 
 // Convert hex color to RGB565 format
 // The hex color format is 0xRRGGBB, and RGB565 format is 0xRRRRRGGGGGGBBBBB
@@ -59,6 +58,12 @@ struct TemperatureHistoryEntry
     int targetTempF;
 };
 
+struct GuiStateHeader
+{
+    enum GUI_STATE_ACTIVE_HEADER state;
+    bool isSelected; // True if this header is selected
+};
+
 struct GuiStateStatus
 {
     int smokerTempF;
@@ -70,8 +75,7 @@ struct GuiStateStatus
 
 struct GuiState
 {
-    enum GUI_STATE_ACTIVE_HEADER headerState;
-    bool isSelected;
+    GuiStateHeader header; // Current active header state
     GuiStateStatus status;
 
     bool isControllerRunning;
@@ -87,12 +91,12 @@ public:
     void begin();
     void service(GuiState &state, ulong currentTimeMSec);
 
-    void commandMoveNext(GuiState &state);
-    void commandMovePrevious(GuiState &state);
-    void commandSelect(GuiState &state);
+    void commandMoveNext(GuiStateHeader &state);
+    void commandMovePrevious(GuiStateHeader &state);
+    void commandSelect(GuiStateHeader &state);
 
 private:
-    void drawHeader(const GuiState &state);
+    void drawHeader(const GuiStateHeader &state);
     void drawFooter(const GuiState &state, ulong controllerRunTimeMSec);
     void drawStausPanel(const GuiStateStatus &state);
     void drawChart(const std::deque<TemperatureHistoryEntry> &history);

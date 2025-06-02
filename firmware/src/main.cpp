@@ -128,13 +128,13 @@ void loop()
   if (g_knob.isRotatingUp())
   {
     // Increase the target temperature
-    g_smokeMateGUI.commandMoveNext(g_guiState);
+    g_smokeMateGUI.commandMoveNext(g_guiState.header);
   }
 
   if (g_knob.isRotatingDown())
   {
     // Decrease the target temperature
-    g_smokeMateGUI.commandMovePrevious(g_guiState);
+    g_smokeMateGUI.commandMovePrevious(g_guiState.header);
   }
 
   // Update the status variable of the controller
@@ -187,8 +187,8 @@ void setupInitializeControllerStatus(ControllerStatus &controllerStatus)
 
 void setupInitializeGuiState(GuiState &guiState)
 {
-  guiState.headerState = GUI_STATE_HEADER_STATUS; // Start with status header active
-  guiState.isSelected = false;                    // Start with no header selected
+  guiState.header.state = GUI_STATE_HEADER_STATUS; // Start with status header active
+  guiState.header.isSelected = false;              // Start with no header selected
   guiState.status.targetTempF = 0;
   guiState.status.smokerTempF = 0;
   guiState.status.foodTempF = 0;

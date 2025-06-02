@@ -50,11 +50,11 @@ void SmokeMateGUI::service(GuiState &state, ulong currentTimeMSec)
     // Update the controller running state
     m_isControllerRunning = state.isControllerRunning;
 
-    drawHeader(state);
+    drawHeader(state.header);
     drawFooter(state, currentTimeMSec - state.controllerStartTimeMSec);
 
     // Draw the status panel or chart based on the header state
-    switch (state.headerState)
+    switch (state.header.state)
     {
     case GUI_STATE_HEADER_STATUS:
         m_isChartUpdateNeeded = true;
@@ -81,60 +81,60 @@ void SmokeMateGUI::service(GuiState &state, ulong currentTimeMSec)
     m_isCommandQueued = false; // Reset the command queued flag after processing
 }
 
-void SmokeMateGUI::commandMoveNext(GuiState &state)
+void SmokeMateGUI::commandMoveNext(GuiStateHeader &header)
 {
     if (m_isCommandQueued)
     {
         return; // Ignore if a command is already queued
     }
 
-    if (!state.isSelected)
+    if (!header.isSelected)
     {
 
-        if (state.headerState == GUI_STATE_HEADER_SETTINGS)
+        if (header.state == GUI_STATE_HEADER_SETTINGS)
         {
-            state.headerState = GUI_STATE_HEADER_STATUS;
+            header.state = GUI_STATE_HEADER_STATUS;
         }
-        else if (state.headerState == GUI_STATE_HEADER_CHART)
+        else if (header.state == GUI_STATE_HEADER_CHART)
         {
-            state.headerState = GUI_STATE_HEADER_SETTINGS;
+            header.state = GUI_STATE_HEADER_SETTINGS;
         }
         else
         {
-            state.headerState = static_cast<GUI_STATE_ACTIVE_HEADER>(state.headerState + 1);
+            header.state = static_cast<GUI_STATE_ACTIVE_HEADER>(header.state + 1);
         }
     }
 
     m_isCommandQueued = true; // Set the command as queued
 }
 
-void SmokeMateGUI::commandMovePrevious(GuiState &state)
+void SmokeMateGUI::commandMovePrevious(GuiStateHeader &header)
 {
     if (m_isCommandQueued)
     {
         return; // Ignore if a command is already queued
     }
 
-    if (!state.isSelected)
+    if (!header.isSelected)
     {
-        if (state.headerState == GUI_STATE_HEADER_STATUS)
+        if (header.state == GUI_STATE_HEADER_STATUS)
         {
-            state.headerState = GUI_STATE_HEADER_SETTINGS;
+            header.state = GUI_STATE_HEADER_SETTINGS;
         }
-        else if (state.headerState == GUI_STATE_HEADER_CHART)
+        else if (header.state == GUI_STATE_HEADER_CHART)
         {
-            state.headerState = GUI_STATE_HEADER_STATUS;
+            header.state = GUI_STATE_HEADER_STATUS;
         }
         else
         {
-            state.headerState = static_cast<GUI_STATE_ACTIVE_HEADER>(state.headerState - 1);
+            header.state = static_cast<GUI_STATE_ACTIVE_HEADER>(header.state - 1);
         }
     }
 
     m_isCommandQueued = true; // Set the command as queued
 }
 
-void SmokeMateGUI::commandSelect(GuiState &state)
+void SmokeMateGUI::commandSelect(GuiStateHeader &state)
 {
     if (m_isCommandQueued)
     {
@@ -162,21 +162,21 @@ void SmokeMateGUI::drawHeaderBlock(uint16_t x, uint16_t y, uint16_t width, uint1
     tft.print(text);
 }
 
-void SmokeMateGUI::drawHeader(const GuiState &state)
+void SmokeMateGUI::drawHeader(const GuiStateHeader &header)
 {
     // Draw the header blocks
     drawHeaderBlock(0, 0,
                     GUI_HEADER_BLOCK_WIDTH, GUI_HEADER_HEIGHT, 19, "STATUS",
-                    state.headerState == GUI_STATE_HEADER_STATUS,
-                    state.isSelected && state.headerState == GUI_STATE_HEADER_STATUS);
+                    header.state == GUI_STATE_HEADER_STATUS,
+                    header.isSelected && header.state == GUI_STATE_HEADER_STATUS);
     drawHeaderBlock(GUI_HEADER_BLOCK_WIDTH + 1, 0,
                     GUI_HEADER_BLOCK_WIDTH, GUI_HEADER_HEIGHT, 25, "CHART",
-                    state.headerState == GUI_STATE_HEADER_CHART,
-                    state.isSelected && state.headerState == GUI_STATE_HEADER_CHART);
+                    header.state == GUI_STATE_HEADER_CHART,
+                    header.isSelected && header.state == GUI_STATE_HEADER_CHART);
     drawHeaderBlock(2 * GUI_HEADER_BLOCK_WIDTH + 2, 0,
                     GUI_HEADER_BLOCK_WIDTH, GUI_HEADER_HEIGHT, 7, "SETTINGS",
-                    state.headerState == GUI_STATE_HEADER_SETTINGS,
-                    state.isSelected && state.headerState == GUI_STATE_HEADER_SETTINGS);
+                    header.state == GUI_STATE_HEADER_SETTINGS,
+                    header.isSelected && header.state == GUI_STATE_HEADER_SETTINGS);
 }
 
 void SmokeMateGUI::drawFooter(const GuiState &state, ulong elapsedMillis)
@@ -356,7 +356,7 @@ void SmokeMateGUI::drawChart(const std::deque<TemperatureHistoryEntry> &history)
     // --- Draw X axis (Time in minutes or hours) ---
     int xTicks = 5;
     ulong durationMSec = maxTime - minTime;
-    bool showHours = (maxTime > 120UL * 60000UL);
+    bool showHours = (maxTime > GUI_CHART_MIN2HOUR_SWITCH_MSEC);
 
     for (int i = 0; i <= xTicks; ++i)
     {
