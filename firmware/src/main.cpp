@@ -1,7 +1,6 @@
 #include "main.h"
 
 // Timer variables
-ulong g_loopTimer1000MSec = 0;
 ulong g_loopTimer500MSec = 0;
 ulong g_loopCurrentTimeMSec = 0;
 
@@ -59,10 +58,11 @@ void setup()
   // Initialize the door
   g_door.begin();
   g_door.close(); // Start with the door closed
-  delay(2000);    // Wait for servo to stabilize
 
   // Initialize the blower motor
   g_blowerMotor.setID("Blower");
+  g_blowerMotor.setPWM(0);
+  g_blowerMotor.stop(); // Start with blower motor stopped
 
   // Initalize the interface
   g_smokeMateGUI.begin();
@@ -92,10 +92,31 @@ void loop()
   // Service the door
   g_door.service(g_loopCurrentTimeMSec);
 
+  // Check the 0.5 second timer
+  if (g_loopCurrentTimeMSec - g_loopTimer500MSec >= 500)
+  {
+    g_loopTimer500MSec = g_loopCurrentTimeMSec;
+
+    // Update GUI state
+    g_smokeMateGUI.updateState(g_controllerStatus);
+    g_smokeMateGUI.service(g_loopCurrentTimeMSec);
+    // Check if the gui requested NVRAM save
+    if (g_smokeMateGUI.isNVRAMSaveRequired())
+    {
+      g_nvram.writeNVRAM(); // Write the configuration to NVRAM
+    }
+
+    // Update the temperature controller
+  }
+}
+
+void loopServiceKnobButtonEvents()
+{
   if (g_knob.isShortButtonPressed())
   {
     g_smokeMateGUI.commandSelect(); // Handle short button press
   }
+
   // Check for the long press on the knob
   if (g_knob.isLongButtonPressed())
   {
@@ -135,7 +156,10 @@ void loop()
     // Decrease the target temperature
     g_smokeMateGUI.commandMovePrevious();
   }
+}
 
+void loopUpdateControllerStatus()
+{
   // Update the status variable of the controller
   g_controllerStatus.temperatureSmoker = g_thermometerSmoker.getTemperatureF();
   g_controllerStatus.temperatureFood = g_thermometerFood.getTemperatureF();
@@ -145,21 +169,6 @@ void loop()
   g_controllerStatus.RSSI = 0; // Placeholder for RSSI, update with actual value if available
   g_controllerStatus.bars = 0; // Placeholder for bars, update with actual value if available
   g_controllerStatus.uptime = g_loopCurrentTimeMSec;
-
-  // Check the 0.5 second timer
-  if (g_loopCurrentTimeMSec - g_loopTimer500MSec >= 500)
-  {
-    g_loopTimer500MSec = g_loopCurrentTimeMSec;
-
-    // Update GUI state
-    g_smokeMateGUI.updateState(g_controllerStatus);
-    g_smokeMateGUI.service(g_loopCurrentTimeMSec);
-    // Check if the gui requested NVRAM save
-    if (g_smokeMateGUI.isNVRAMSaveRequired())
-    {
-      g_nvram.writeNVRAM(); // Write the configuration to NVRAM
-    }
-  }
 }
 
 void setupInitializeControllerStatus(ControllerStatus &controllerStatus)

@@ -88,5 +88,7 @@ void loadDefaultConfiguration(Configuration *ptr_configuration);
 void setupInitializeNVRAM();
 void setupInitializeGuiState(GuiState &guiState);
 void setupInitializeControllerStatus(ControllerStatus &controllerStatus);
+void loopServiceKnobButtonEvents();
+void loopUpdateControllerStatus();
 
 #endif // MAIN_H
