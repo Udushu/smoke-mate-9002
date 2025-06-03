@@ -156,6 +156,7 @@ public:
 private:
     Adafruit_ST7789 &m_tft;  // Reference to the display object
     GuiState m_guiState;     // Current GUI state
+    GuiState m_prevGuiState; // Previous GUI state for comparison
     Configuration &m_config; // Reference to the configuration object
 
     bool m_isCommandQueued = false;                                   // Flag to indicate if a command is queued
@@ -164,6 +165,8 @@ private:
     bool m_isChartUpdateNeeded = false;                               // Flag to indicate if chart update is needed
     ulong m_chartSampleIntervalMSec = GUI_CHART_UPDATE_INTERVAL_MSEC; // Current sampling interval
     bool m_isNVRAMSaveRequired = false;                               // Flag to indicate if NVRAM save is required
+    bool m_isForcedGUIUpdate = false; // Flag to force GUI update
+    bool m_isFirstHeaderRender = true; // Flag to indicate if this is the first header render
 
     void drawHeader(const GuiStateHeader &state);
     void drawFooter(const GuiState &state, ulong controllerRunTimeMSec);

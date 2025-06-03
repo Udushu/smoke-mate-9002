@@ -251,6 +251,43 @@ static const SettingItem SETTINGS_LIST[] = {
     {"Exit", nullptr, nullptr, nullptr}};
 static constexpr int SETTINGS_COUNT = sizeof(SETTINGS_LIST) / sizeof(SETTINGS_LIST[0]);
 
+// ========================================== INTERNAL HELPER METHODS ====================================
+bool operator==(const GuiStateHeader &a, const GuiStateHeader &b)
+{
+    return a.state == b.state;
+}
+
+bool operator!=(const GuiStateHeader &a, const GuiStateHeader &b)
+{
+    return !(a == b);
+}
+
+bool operator==(const GuiStateStatus &a, const GuiStateStatus &b)
+{
+    return a.smokerTempF == b.smokerTempF &&
+           a.foodTempF == b.foodTempF &&
+           a.targetTempF == b.targetTempF &&
+           a.fanPercent == b.fanPercent &&
+           a.doorPercent == b.doorPercent;
+}
+
+bool operator!=(const GuiStateStatus &a, const GuiStateStatus &b)
+{
+    return !(a == b);
+}
+
+bool operator==(const GuiStateSettings &a, const GuiStateSettings &b)
+{
+    return a.cursor == b.cursor &&
+           a.scroll == b.scroll &&
+           a.editingIndex == b.editingIndex;
+}
+
+bool operator!=(const GuiStateSettings &a, const GuiStateSettings &b)
+{
+    return !(a == b);
+}
+
 // ========================================== PUBLIC METHODS ==========================================
 
 SmokeMateGUI::SmokeMateGUI(Adafruit_ST7789 &displayRef, Configuration &config) : m_tft(displayRef),
@@ -270,6 +307,8 @@ SmokeMateGUI::SmokeMateGUI(Adafruit_ST7789 &displayRef, Configuration &config) :
     m_guiState.settings.editingIndex = -1;  // Not editing any setting initially
     // Initialize the history
     m_guiState.history.clear();
+
+    m_prevGuiState = m_guiState; // Initialize previous state to current state
 }
 
 void SmokeMateGUI::begin()
@@ -319,7 +358,12 @@ void SmokeMateGUI::service(ulong currentTimeMSec)
     // Update the controller running state
     m_isControllerRunning = m_guiState.isControllerRunning;
 
-    drawHeader(m_guiState.header);
+    if (m_guiState.header != m_prevGuiState.header || m_isFirstHeaderRender)
+    {
+        drawHeader(m_guiState.header);
+        m_isFirstHeaderRender = false; // Reset the first render flag after drawing the header
+    }
+
     drawFooter(m_guiState, currentTimeMSec - m_guiState.controllerStartTimeMSec);
 
     // Draw the status panel or chart based on the header state
@@ -327,7 +371,11 @@ void SmokeMateGUI::service(ulong currentTimeMSec)
     {
     case GUI_STATE_HEADER_STATUS:
         m_isChartUpdateNeeded = true;
-        drawStausPanel(m_guiState.status);
+        if ((m_guiState.status != m_prevGuiState.status) || m_isForcedGUIUpdate)
+        {
+            m_isForcedGUIUpdate = false; // Reset the forced update flag
+            drawStausPanel(m_guiState.status);
+        }
         break;
 
     case GUI_STATE_HEADER_CHART:
@@ -340,22 +388,35 @@ void SmokeMateGUI::service(ulong currentTimeMSec)
 
     case GUI_STATE_HEADER_SETTINGS:
         m_isChartUpdateNeeded = true;
-        drawSettingsPanel(m_guiState);
+        if ((m_guiState.settings != m_prevGuiState.settings) || m_isForcedGUIUpdate)
+        {
+            m_isForcedGUIUpdate = false; // Reset the forced update flag
+            drawSettingsPanel(m_guiState);
+        }
         break;
 
     case GUI_STATE_HEADER_SETTINGS_EDIT:
         m_isChartUpdateNeeded = true;
-        drawSettingsPanel(m_guiState);
+        if ((m_guiState.settings != m_prevGuiState.settings) || m_isForcedGUIUpdate)
+        {
+            m_isForcedGUIUpdate = false; // Reset the forced update flag
+            drawSettingsPanel(m_guiState);
+        }
         break;
 
     case GUI_STATE_HEADER_SETTINGS_EDIT_VALUE:
         m_isChartUpdateNeeded = true;
-        drawSettingsPanel(m_guiState);
+        if ((m_guiState.settings != m_prevGuiState.settings) || m_isForcedGUIUpdate)
+        {
+            m_isForcedGUIUpdate = false; // Reset the forced update flag
+            drawSettingsPanel(m_guiState);
+        }
         break;
     }
     // drawChart(state.smokerHistory, state.foodHistory);
 
-    m_isCommandQueued = false; // Reset the command queued flag after processing
+    m_isCommandQueued = false;   // Reset the command queued flag after processing
+    m_prevGuiState = m_guiState; // Update the previous state to the current state
 }
 
 void SmokeMateGUI::updateState(const ControllerStatus &controllerStatus)
@@ -380,10 +441,13 @@ void SmokeMateGUI::commandMoveNext()
         return; // Ignore if a command is already queued
     }
 
+    m_isForcedGUIUpdate = true; // Force GUI update
+
     switch (header.state)
     {
     case GUI_STATE_HEADER_STATUS:
         header.state = GUI_STATE_HEADER_CHART; // Move to chart state
+        m_isForcedGUIUpdate = true;            // Force GUI update
         break;
     case GUI_STATE_HEADER_CHART:
         header.state = GUI_STATE_HEADER_SETTINGS; // Move to settings state
@@ -433,6 +497,8 @@ void SmokeMateGUI::commandMovePrevious()
     {
         return; // Ignore if a command is already queued
     }
+
+    m_isForcedGUIUpdate = true; // Force GUI update
 
     switch (header.state)
     {
@@ -487,6 +553,8 @@ void SmokeMateGUI::commandSelect()
     {
         return; // Ignore if a command is already queued
     }
+
+    m_isForcedGUIUpdate = true; // Force GUI update
 
     switch (header.state)
     {
@@ -632,18 +700,6 @@ void SmokeMateGUI::drawStausPanel(const GuiStateStatus &state)
     char targetTempStr[16];
     char fanSpeedStr[16];
     char doorPosition[16];
-
-    // // Serial debugging output
-    // Serial.print("Smoker Temp");
-    // Serial.println(state.smokerTempF);
-    // Serial.print("Food Temp");
-    // Serial.println(state.foodTempF);
-    // Serial.print("Target Temp");
-    // Serial.println(state.targetTempF);
-    // Serial.print("Fan Speed");
-    // Serial.println(state.fanPercent);
-    // Serial.print("Door Position");
-    // Serial.println(state.doorPercent);
 
     // SMOKER TEMPERATURE ===================================================
     snprintf(smokerTempStr, sizeof(smokerTempStr), "%d F", state.smokerTempF);
