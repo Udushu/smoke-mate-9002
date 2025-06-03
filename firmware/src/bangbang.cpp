@@ -16,7 +16,7 @@ void BangBang::setHysteresis(int hyst)
     m_hysteresis = hyst;
 }
 
-BangBangState BangBang::service(int currentTemp)
+BangBangState BangBang::service(int currentTemp, ulong currentTimeMSec)
 {
 
     switch (m_state)

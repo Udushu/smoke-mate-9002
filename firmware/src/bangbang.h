@@ -24,7 +24,7 @@ public:
     void setHysteresis(int hyst);
 
     // Returns the current state (IDLE, HEAT, COOL)
-    BangBangState service(int currentTemp);
+    BangBangState service(int currentTemp, ulong currentTimeMSec);
     BangBangState getState() const;
 };
 
