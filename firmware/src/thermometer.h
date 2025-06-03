@@ -7,6 +7,7 @@
 #include "debug.h"
 
 // #define THERMOMETER_DEBUG
+# define THERMOMETER_SIMULATE
 
 class Thermometer
 {
@@ -26,6 +27,8 @@ private:
     float m_offset;
 
     bool m_isNewTemperatureAvailable;
+
+    void simulateTemperature();
 
 public:
     Thermometer();
