@@ -31,7 +31,8 @@ Blower g_blowerMotor(PIN_BLOWER_PWM, PIN_BLOWER_A, PIN_BLOWER_B, PIN_BLOWER_ENAB
 SmokeMateGUI g_smokeMateGUI(g_tftDisplay, g_configuration);
 
 // Device status
-ControllerStatus g_controllerStatus;
+ControllerStatus g_controllerStatus; // Controller status
+bool g_prevIsRunning = false;        // Previous running state for the controller
 
 // Temperature Controller
 TemperatureController g_temperatureController(g_controllerStatus, g_configuration, g_blowerMotor, g_door);
@@ -97,6 +98,21 @@ void loop()
 
   loopServiceKnobButtonEvents();
   loopUpdateControllerStatus();
+
+  // Do actions on the controller status change
+  if (g_controllerStatus.isRunning != g_prevIsRunning)
+  {
+    // if the controller just stopped close the door and stop the blower motor
+    if (!g_controllerStatus.isRunning && g_prevIsRunning)
+    {
+      // Stop the blower motor
+      g_blowerMotor.setPWM(0);
+      g_blowerMotor.stop();
+      // Close the door
+      g_door.close();
+    }
+    g_prevIsRunning = g_controllerStatus.isRunning; // Update the previous running state
+  }
 
   // Service the temperature controller
   if (g_controllerStatus.isRunning && g_thermometerSmoker.isNewTemperatureAvailable())
