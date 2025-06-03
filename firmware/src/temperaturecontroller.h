@@ -8,6 +8,8 @@
 #include "blower.h"
 #include "door.h"
 
+#define DEBUG_TEMPERATURE_CONTROLLER
+
 enum ControlAlgorithm
 {
     CONTROL_PID,
@@ -27,6 +29,7 @@ private:
     ulong m_lastServiceTimeMSec;  // Last service time in milliseconds
 
     void servicePIDController(int currentTempF, ulong currentTimeMSec);
+    void serviceBangBangController(int currentTempF, ulong currentTimeMSec);
 
 public:
     TemperatureController(ControllerStatus &status, Configuration &config, Blower &blower, Door &door);
