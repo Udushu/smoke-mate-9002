@@ -33,6 +33,9 @@ SmokeMateGUI g_smokeMateGUI(g_tftDisplay, g_configuration);
 // Device status
 ControllerStatus g_controllerStatus;
 
+// Temperature Controller
+TemperatureController g_temperatureController(g_controllerStatus, g_configuration, g_blowerMotor, g_door);
+
 void setup()
 {
 
@@ -91,6 +94,16 @@ void loop()
 
   // Service the door
   g_door.service(g_loopCurrentTimeMSec);
+
+  loopServiceKnobButtonEvents();
+  loopUpdateControllerStatus();
+
+  // Service the temperature controller
+  if (g_controllerStatus.isRunning && g_thermometerSmoker.isNewTemperatureAvailable())
+  {
+    // If the controller is not running, we still want to update the temperature
+    g_temperatureController.service(g_thermometerSmoker.getTemperatureF(), g_loopCurrentTimeMSec);
+  }
 
   // Check the 0.5 second timer
   if (g_loopCurrentTimeMSec - g_loopTimer500MSec >= 500)
