@@ -16,7 +16,7 @@ void BangBang::setHysteresis(int hyst)
     m_hysteresis = hyst;
 }
 
-BANGBANG_STATE BangBang::service(int currentTemp)
+BangBangState BangBang::service(int currentTemp)
 {
 
     switch (m_state)
@@ -52,7 +52,7 @@ BANGBANG_STATE BangBang::service(int currentTemp)
     }
 }
 
-BANGBANG_STATE BangBang::getState() const
+BangBangState BangBang::getState() const
 {
     return m_state;
 }

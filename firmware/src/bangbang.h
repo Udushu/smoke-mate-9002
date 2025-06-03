@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-enum BANGBANG_STATE
+enum BangBangState
 {
     BANGBANG_STATE_IDLE,
     BANGBANG_STATE_HEAT,
@@ -13,10 +13,10 @@ enum BANGBANG_STATE
 class BangBang
 {
 private:
-    int m_lowThreshold;     // Lower threshold (F)
-    int m_highThreshold;    // Upper threshold (F)
-    int m_hysteresis;       // Hysteresis (F)
-    BANGBANG_STATE m_state; // Current state
+    int m_lowThreshold;    // Lower threshold (F)
+    int m_highThreshold;   // Upper threshold (F)
+    int m_hysteresis;      // Hysteresis (F)
+    BangBangState m_state; // Current state
 public:
     BangBang(int low, int high, int hyst);
 
@@ -24,8 +24,8 @@ public:
     void setHysteresis(int hyst);
 
     // Returns the current state (IDLE, HEAT, COOL)
-    BANGBANG_STATE service(int currentTemp);
-    BANGBANG_STATE getState() const;
+    BangBangState service(int currentTemp);
+    BangBangState getState() const;
 };
 
 #endif // BANGBANG_H
