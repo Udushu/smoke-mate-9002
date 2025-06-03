@@ -12,6 +12,7 @@
 #include "door.h"
 #include "blower.h"
 #include "gui.h"
+#include "temperaturecontroller.h"
 #include "tftdebug.h"
 #include "debug.h"
 
