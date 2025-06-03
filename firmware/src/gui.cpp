@@ -633,17 +633,17 @@ void SmokeMateGUI::drawStausPanel(const GuiStateStatus &state)
     char fanSpeedStr[16];
     char doorPosition[16];
 
-    // Serial debugging output
-    Serial.print("Smoker Temp");
-    Serial.println(state.smokerTempF);
-    Serial.print("Food Temp");
-    Serial.println(state.foodTempF);
-    Serial.print("Target Temp");
-    Serial.println(state.targetTempF);
-    Serial.print("Fan Speed");
-    Serial.println(state.fanPercent);
-    Serial.print("Door Position");
-    Serial.println(state.doorPercent);
+    // // Serial debugging output
+    // Serial.print("Smoker Temp");
+    // Serial.println(state.smokerTempF);
+    // Serial.print("Food Temp");
+    // Serial.println(state.foodTempF);
+    // Serial.print("Target Temp");
+    // Serial.println(state.targetTempF);
+    // Serial.print("Fan Speed");
+    // Serial.println(state.fanPercent);
+    // Serial.print("Door Position");
+    // Serial.println(state.doorPercent);
 
     // SMOKER TEMPERATURE ===================================================
     snprintf(smokerTempStr, sizeof(smokerTempStr), "%d F", state.smokerTempF);
