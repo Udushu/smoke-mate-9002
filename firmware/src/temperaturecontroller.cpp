@@ -122,8 +122,9 @@ void TemperatureController::servicePIDController(int currentTempF, ulong current
 #endif
         // Make sure that the control output is not negative
         controlOutput = abs(controlOutput);
-        controlOutput = constrain(controlOutput, 0, 255);
-        controlOutput = map(controlOutput, 0, 255, m_config.doorClosePosition, m_config.doorOpenPosition);
+        controlOutput = constrain(controlOutput, 0, 100);
+        controlOutput = map(controlOutput, 0, 100, m_config.doorOpenPosition, m_config.doorClosePosition);
+        controlOutput = constrain(controlOutput, m_config.doorClosePosition, m_config.doorOpenPosition);
         m_blower.stop();
         m_door.setPosition(controlOutput);
     }

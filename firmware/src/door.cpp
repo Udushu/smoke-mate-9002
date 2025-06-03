@@ -14,47 +14,55 @@ void Door::begin()
     m_servo.attach(m_pin, 600, 2300); // Attach servo with min and max pulse width
     m_servo.write(0);
     m_state = DOOR_STOPPED; // Start in stopped state
-    close();                // Default to closed
+    delay(100);             // Allow servo to initialize
+    m_servo.write(100);
+    delay(100); // Allow servo to initialize
+    close();    // Default to closed
+    delay(100); // Allow servo to initialize
 }
 
 void Door::service(ulong currentTimeMSec)
 {
-    switch (m_state)
-    {
-    case DOOR_IDLE:
-#ifdef DOOR_DEBUG
-        DEBUG_PRINTLN("Door is idle");
-#endif
-        break;
-    case DOOR_STOPPED:
-        if (m_currentPosition != m_demandedPosition)
-        {
-            m_state = DOOR_MOVING;
-            m_startMoveTimeMSec = currentTimeMSec;
-            setPosition(m_demandedPosition);
-        }
-        break;
-    case DOOR_MOVING:
-        if (currentTimeMSec - m_startMoveTimeMSec >= m_traveTimeMsec)
-        {
-            // Movement is complete
-            m_currentPosition = m_demandedPosition; // Update current position
-            m_state = DOOR_STOPPED;                 // Set state to stopped
-        }
-        break;
+    m_state = DOOR_STOPPED; // Reset state to stopped at the beginning of service
+    //     switch (m_state)
+    //     {
+    //     case DOOR_IDLE:
+    // #ifdef DOOR_DEBUG
+    //         DEBUG_PRINTLN("Door is idle");
+    // #endif
+    //         break;
+    //     case DOOR_STOPPED:
+    //         if (m_currentPosition != m_demandedPosition)
+    //         {
+    //             m_state = DOOR_MOVING;
+    //             m_startMoveTimeMSec = currentTimeMSec;
+    //             setPosition(m_demandedPosition);
+    //         }
+    //         break;
+    //     case DOOR_MOVING:
+    //         if (currentTimeMSec - m_startMoveTimeMSec >= m_traveTimeMsec)
+    //         {
+    //             // Movement is complete
+    //             m_currentPosition = m_demandedPosition; // Update current position
+    //             m_state = DOOR_STOPPED;                 // Set state to stopped
+    //         }
+    //         break;
 
-    default:
-        break;
-    }
+    //     default:
+    //         break;
+    //     }
 }
 
 void Door::setPosition(uint pos)
 {
+#ifdef DOOR_DEBUG
+    DEBUG_PRINTLN("DOOR::setPosition to " + String(pos));
+#endif
     // Make sure that the door is not moving
     if (m_state == DOOR_MOVING)
     {
 #ifdef DOOR_DEBUG
-        DEBUG_PRINTLN("Door is moving, cannot set position");
+        DEBUG_PRINTLN("DOOR:setPosition - Door is Moving");
 #endif
         return;
     }
@@ -63,7 +71,7 @@ void Door::setPosition(uint pos)
     if (pos < m_closedPosition || pos > m_openPosition)
     {
 #ifdef DOOR_DEBUG
-        DEBUG_PRINTLN("Position out of range, must be between " + String(m_closedPosition) + " and " + String(m_openPosition));
+        DEBUG_PRINTLN("DOOR::setPosition is Out of Range = [" + String(m_closedPosition) + " - " + String(m_openPosition) + "]");
 #endif
         return;
     }
@@ -72,7 +80,7 @@ void Door::setPosition(uint pos)
     if (pos == m_currentPosition)
     {
 #ifdef DOOR_DEBUG
-        DEBUG_PRINTLN("Position is already set to " + String(pos));
+        DEBUG_PRINTLN("DOOR::setPosition - Duplicate Position");
 #endif
         return;
     }
@@ -97,11 +105,17 @@ uint Door::getPosition()
 
 void Door::open()
 {
+#ifdef DOOR_DEBUG
+    DEBUG_PRINTLN("DOOR::open - Opening Door");
+#endif
     setPosition(m_openPosition);
 }
 
 void Door::close()
 {
+#ifdef DOOR_DEBUG
+    DEBUG_PRINTLN("DOOR::close - Closing Door");
+#endif
     setPosition(m_closedPosition);
 }
 
@@ -112,10 +126,16 @@ bool Door::isMoving()
 
 bool Door::isOpen()
 {
+#ifdef DOOR_DEBUG
+    DEBUG_PRINTLN("DOOR::isOpen - Current Position: " + String(m_currentPosition) + ", Open Position: " + String(m_openPosition));
+#endif
     return m_currentPosition == m_openPosition;
 }
 
 bool Door::isClosed()
 {
+#ifdef DOOR_DEBUG
+    DEBUG_PRINTLN("DOOR::isClosed - Current Position: " + String(m_currentPosition) + ", Closed Position: " + String(m_closedPosition));
+#endif
     return m_currentPosition == m_closedPosition;
 }

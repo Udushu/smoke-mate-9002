@@ -61,7 +61,6 @@ void setup()
 
   // Initialize the door
   g_door.begin();
-  g_door.close(); // Start with the door closed
 
   // Initialize the blower motor
   g_blowerMotor.setID("Blower");
@@ -80,6 +79,8 @@ void setup()
 
 void loop()
 {
+
+  return;
 
   // Get the current time in milliseconds
   g_loopCurrentTimeMSec = millis();
@@ -119,6 +120,11 @@ void loop()
   {
     // If the controller is not running, we still want to update the temperature
     g_temperatureController.service(g_thermometerSmoker.getTemperatureF(), g_loopCurrentTimeMSec);
+  }
+
+  if (!g_controllerStatus.isRunning && g_configuration.isForcedDoorPosition)
+  {
+    g_door.setPosition(g_configuration.forcedDoorPosition); // Set the door position if forced
   }
 
   // Check the 0.5 second timer

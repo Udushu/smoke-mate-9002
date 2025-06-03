@@ -5,7 +5,7 @@
 #include "types.h"
 #include "debug.h"
 
-// #define DOOR_DEBUG
+#define DOOR_DEBUG
 
 enum DOOR_STATE
 {
