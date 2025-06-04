@@ -419,7 +419,7 @@ void SmokeMateGUI::service(ulong currentTimeMSec)
     m_prevGuiState = m_guiState; // Update the previous state to the current state
 }
 
-void SmokeMateGUI::updateState(const ControllerStatus &controllerStatus)
+void SmokeMateGUI::updateState(const ControllerStatus &controllerStatus, const Configuration &config)
 {
     // Update the GUI state with the controller status
     m_guiState.isControllerRunning = controllerStatus.isRunning;
@@ -427,7 +427,7 @@ void SmokeMateGUI::updateState(const ControllerStatus &controllerStatus)
     m_guiState.status.foodTempF = controllerStatus.temperatureFood;
     m_guiState.status.targetTempF = controllerStatus.temperatureTarget;
     m_guiState.status.fanPercent = map(controllerStatus.fanPWM, 0, 255, 0, 100);
-    m_guiState.status.doorPercent = map(controllerStatus.doorPosition, 0, 180, 0, 100);
+    m_guiState.status.doorPercent = map(controllerStatus.doorPosition, config.doorClosePosition, config.doorOpenPosition, 0, 100);
     m_guiState.controllerStartTimeMSec = controllerStatus.controllerStartMSec;
 }
 

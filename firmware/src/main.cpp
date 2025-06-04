@@ -138,7 +138,7 @@ void loop()
     g_loopTimer500MSec = g_loopCurrentTimeMSec;
 
     // Update GUI state
-    g_smokeMateGUI.updateState(g_controllerStatus);
+    g_smokeMateGUI.updateState(g_controllerStatus, g_configuration);
     g_smokeMateGUI.service(g_loopCurrentTimeMSec);
     // Check if the gui requested NVRAM save
     if (g_smokeMateGUI.isNVRAMSaveRequired())

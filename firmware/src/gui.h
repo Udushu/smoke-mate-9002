@@ -145,7 +145,7 @@ public:
     void begin();
     void service(ulong currentTimeMSec);
 
-    void updateState(const ControllerStatus &controllerStatus);
+    void updateState(const ControllerStatus &controllerStatus, const Configuration &config);
 
     void commandMoveNext();
     void commandMovePrevious();
@@ -165,8 +165,8 @@ private:
     bool m_isChartUpdateNeeded = false;                               // Flag to indicate if chart update is needed
     ulong m_chartSampleIntervalMSec = GUI_CHART_UPDATE_INTERVAL_MSEC; // Current sampling interval
     bool m_isNVRAMSaveRequired = false;                               // Flag to indicate if NVRAM save is required
-    bool m_isForcedGUIUpdate = false; // Flag to force GUI update
-    bool m_isFirstHeaderRender = true; // Flag to indicate if this is the first header render
+    bool m_isForcedGUIUpdate = false;                                 // Flag to force GUI update
+    bool m_isFirstHeaderRender = true;                                // Flag to indicate if this is the first header render
 
     void drawHeader(const GuiStateHeader &state);
     void drawFooter(const GuiState &state, ulong controllerRunTimeMSec);
