@@ -131,7 +131,7 @@ void Thermometer::simulateTemperature()
     // simulate raw temperature value such that it converts to 225F (107.2C)
     m_rawTemperature = 425; // 900 * 0.25 = 225F
     // Add simusoidal oscillation to the raw temperature with amplude such that it converts to 50F (10C) and period of 10 seconds
-    m_rawTemperature += static_cast<int>(100 * sin((millis() / 200000.0) * TWO_PI)); // 50F = 10C
+    m_rawTemperature += static_cast<int>(100 * sin((millis() / 100000.0) * TWO_PI)); // 50F = 10C
     // Convert the raw temperature to degrees Celsius
     m_temperatureC = static_cast<int>(round(m_rawTemperature * 0.25));
     // Convert the raw temperature to degrees Farenhite (0°C × 9/5) + 32 = 32°F

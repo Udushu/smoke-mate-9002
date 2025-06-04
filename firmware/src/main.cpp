@@ -61,6 +61,11 @@ void setup()
 
   // Initialize the door
   g_door.begin();
+  g_door.setBoundaries(g_configuration.doorClosePosition, g_configuration.doorOpenPosition);
+  g_door.close();
+  while (g_door.isMoving())
+  {
+  }
 
   // Initialize the blower motor
   g_blowerMotor.setID("Blower");
@@ -80,7 +85,7 @@ void setup()
 void loop()
 {
 
-  return;
+  // return;
 
   // Get the current time in milliseconds
   g_loopCurrentTimeMSec = millis();
@@ -191,6 +196,10 @@ void loopServiceKnobButtonEvents()
     // Decrease the target temperature
     g_smokeMateGUI.commandMovePrevious();
   }
+}
+
+void updateConfiguration()
+{
 }
 
 void loopUpdateControllerStatus()

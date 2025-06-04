@@ -6,11 +6,15 @@
 #include "debug.h"
 
 #define DOOR_DEBUG
+#define DOOR_STEP_MOVE_TIME_MSEC 5UL    // Default step move time in milliseconds (type: ulong)
+#define DOOR_SERVO_MIN_PULSE_WIDTH 500  // Minimum pulse width for the servo (in microseconds)
+#define DOOR_SERVO_MAX_PULSE_WIDTH 2500 // Maximum pulse width for the servo (in microseconds)
 
-enum DOOR_STATE
+enum DoorState
 {
     DOOR_IDLE,
     DOOR_STOPPED,
+    DOOR_STARTING,
     DOOR_MOVING
 };
 
@@ -28,9 +32,11 @@ public:
     bool isMoving();
     bool isOpen();
     bool isClosed();
+    void setBoundaries(uint closedPos, uint openPos);
 
 private:
-    DOOR_STATE m_state;
+    DoorState m_state;
+    DoorState m_prevState;
     ulong m_startMoveTimeMSec;
     ulong m_stepMoveTimeMSec;
     ulong m_traveTimeMsec;
