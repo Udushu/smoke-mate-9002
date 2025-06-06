@@ -57,6 +57,9 @@ struct Configuration
 
     bool isForcedDoorPosition;
     int forcedDoorPosition;
+
+    char wifiSSID[65];     // WiFi SSID
+    char wifiPassword[65]; // WiFi Password
 };
 
 #endif // TYPES_H
