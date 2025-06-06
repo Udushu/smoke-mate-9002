@@ -1,4 +1,5 @@
 #include "main.h"
+#include "Arduino.h"
 
 // Timer variables
 ulong g_loopTimer500MSec = 0;
@@ -40,6 +41,11 @@ TemperatureController g_temperatureController(g_controllerStatus, g_configuratio
 void setup()
 {
 
+  // Blink LED to indicate startup
+  pinMode(PIN_LED, OUTPUT);
+  digitalWrite(PIN_LED, HIGH); // Turn on LED
+  delay(500);
+
   // Set up SPI manually if needed (ESP32 hardware SPI)
   SPI.begin(TFT_SCLK, -1, TFT_MOSI, TFT_CS);
 
@@ -79,11 +85,14 @@ void setup()
   g_thermometerSmoker.setSimulated(g_configuration.isThemometerSimulated);
   g_thermometerFood.setSimulated(g_configuration.isThemometerSimulated);
 
-  // Blink LED to indicate startup
-  pinMode(PIN_LED, OUTPUT);
-  digitalWrite(PIN_LED, HIGH); // Turn off LED
-  delay(1000);                 // Wait for a second
-  digitalWrite(PIN_LED, LOW);  // Turn on LED
+  if (g_configuration.isWiFiEnabled)
+  {
+    // If WiFi is enabled, attempt to connect
+    DEBUG_PRINTLN("WiFi is enabled, attempting to connect...");
+    connectToWiFi();
+  }
+
+  digitalWrite(PIN_LED, LOW); // Turn off LED - setup is now done
 }
 
 void loop()
@@ -151,7 +160,12 @@ void loop()
       g_nvram.writeNVRAM(); // Write the configuration to NVRAM
     }
 
-    // Update the temperature controller
+    // Update the wifi status
+    if (g_configuration.isWiFiEnabled)
+    {
+      g_controllerStatus.RSSI = WiFi.RSSI();
+      g_controllerStatus.bars = WiFi.RSSI() / -20; // Convert RSSI to bars (0-5)
+    }
   }
 }
 
@@ -183,6 +197,10 @@ void loopServiceKnobButtonEvents()
         // Stop the controller
         // g_blowerMotor.stop(); // Stop the blower motor
       }
+    }
+    else
+    {
+      g_smokeMateGUI.commandConfirm(); // Handle long button press in settings edit mode
     }
   }
 
@@ -223,9 +241,10 @@ void loopUpdateControllerStatus()
   g_controllerStatus.temperatureTarget = g_configuration.temperatureTarget;
   g_controllerStatus.fanPWM = g_blowerMotor.getPWM();
   g_controllerStatus.doorPosition = g_door.getPosition();
-  g_controllerStatus.RSSI = 0; // Placeholder for RSSI, update with actual value if available
-  g_controllerStatus.bars = 0; // Placeholder for bars, update with actual value if available
   g_controllerStatus.uptime = g_loopCurrentTimeMSec;
+  // g_controllerStatus.RSSI = WiFi.RSSI();
+  // g_controllerStatus.bars = WiFi.RSSI() / -20;             // Convert RSSI to bars (0-5)
+  g_controllerStatus.isWiFiConnected = WiFi.isConnected(); // Update WiFi connection status
 }
 
 void setupInitializeControllerStatus(ControllerStatus &controllerStatus)
@@ -272,6 +291,10 @@ void loadDefaultConfiguration(Configuration *ptr_configuration)
   ptr_configuration->forcedFanPWM = DEFAULT_BANG_BANG_FAN_SPEED;
   ptr_configuration->isForcedDoorPosition = false;
   ptr_configuration->forcedDoorPosition = 0;
+
+  ptr_configuration->isWiFiEnabled = false;  // Start with WiFi disabled
+  ptr_configuration->wifiSSID[0] = '\0';     // Empty SSID
+  ptr_configuration->wifiPassword[0] = '\0'; // Empty password
 }
 
 void setupInitializeNVRAM()
@@ -328,5 +351,50 @@ void setupInitializeNVRAM()
 #ifdef DEBUG_MAIN
     DEBUG_PRINTLN("NVRAM READ success");
 #endif
+  }
+}
+
+void connectToWiFi()
+{
+  // attempt to connect to WiFi with the stored credentials, repeating until successful or number of attempts is reached
+  int attempts = 0;
+  g_controllerStatus.isWiFiConnected = false;
+  while (attempts < MAX_WIFI_CONNECT_ATTEMPTS)
+  {
+
+    // If NVRAM read was successful, try to connect to WiFi
+    if (g_configuration.wifiSSID[0] != '\0' && g_configuration.wifiPassword[0] != '\0')
+    {
+      DEBUG_PRINTLN("Connecting to WiFi...");
+      WiFi.begin(g_configuration.wifiSSID, g_configuration.wifiPassword);
+      if (WiFi.waitForConnectResult() == WL_CONNECTED)
+      {
+        // Store the IP address in the controller status
+        g_controllerStatus.ipAddress = WiFi.localIP().toString();
+        g_controllerStatus.RSSI = WiFi.RSSI();
+
+        if (g_controllerStatus.RSSI > -55)
+          g_controllerStatus.bars = 4;
+        else if (g_controllerStatus.RSSI > -70)
+          g_controllerStatus.bars = 3;
+        else if (g_controllerStatus.RSSI > -80)
+          g_controllerStatus.bars = 2;
+        else if (g_controllerStatus.RSSI > -90)
+          g_controllerStatus.bars = 1;
+        else
+          g_controllerStatus.bars = 0;
+
+        g_controllerStatus.isWiFiConnected = true; // Set WiFi connected status
+        DEBUG_PRINTLN("Connected to WiFi");
+        // print the IP address
+        DEBUG_PRINTLN("IP Address: ");
+        DEBUG_PRINTLN(g_controllerStatus.ipAddress);
+
+        break; // Exit loop on successful connection
+      }
+    }
+
+    attempts++;
+    delay(1000); // Wait before retrying
   }
 }

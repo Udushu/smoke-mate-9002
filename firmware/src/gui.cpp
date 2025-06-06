@@ -226,6 +226,14 @@ void decForcedDoorPos(Configuration &c)
         c.forcedDoorPosition -= 1;
 }
 
+// ENABLE MANUAL DOOR CONTROL =====================================================================
+static String getIsWifiEnabled(const Configuration &c) { return c.isWiFiEnabled ? "Yes" : "No"; }
+void incIsWifiEnabled(Configuration &c) { c.isWiFiEnabled = !c.isWiFiEnabled; }
+void decIsWifiEnabled(Configuration &c) { c.isWiFiEnabled = !c.isWiFiEnabled; }
+
+const char *WIFI_CHAR_SET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
+const int wifiCharSetLen = strlen(WIFI_CHAR_SET);
+
 static const SettingItem SETTINGS_LIST[] = {
     {"Target Temp", getTargetTemp, incTargetTemp, decTargetTemp},
     {"Contol Interval", getInterval, incInterval, decInterval},
@@ -254,8 +262,18 @@ static const SettingItem SETTINGS_LIST[] = {
     {"Manual Door", getIsForcedDoor, incIsForcedDoor, decIsForcedDoor},
     {"Forced Door Pos", getForcedDoorPos, incForcedDoorPos, decForcedDoorPos},
 
+    {"Enable WiFi", getIsWifiEnabled, incIsWifiEnabled, decIsWifiEnabled},
+    {"WiFi SSID", nullptr, nullptr, nullptr},
+    {"WiFi Password", nullptr, nullptr, nullptr},
+
+    {"Reboot", nullptr, nullptr, nullptr},
+
     {"Exit", nullptr, nullptr, nullptr}};
 static constexpr int SETTINGS_COUNT = sizeof(SETTINGS_LIST) / sizeof(SETTINGS_LIST[0]);
+static constexpr int SETTINGS_WIFI_SSID_INDEX = SETTINGS_COUNT - 4;     // Index of WiFi SSID setting
+static constexpr int SETTINGS_WIFI_PASSWORD_INDEX = SETTINGS_COUNT - 3; // Index of WiFi Password setting
+static constexpr int SETTINGS_REBOOT_INDEX = SETTINGS_COUNT - 2;        // Index of WiFi Password setting
+static constexpr int SETTINGS_EXIT_INDEX = SETTINGS_COUNT - 1;          // Index of the last editable setting
 
 // ========================================== INTERNAL HELPER METHODS ====================================
 bool operator==(const GuiStateHeader &a, const GuiStateHeader &b)
@@ -286,7 +304,10 @@ bool operator==(const GuiStateSettings &a, const GuiStateSettings &b)
 {
     return a.cursor == b.cursor &&
            a.scroll == b.scroll &&
-           a.editingIndex == b.editingIndex;
+           a.editingIndex == b.editingIndex &&
+           a.wifiSSIDIndex == b.wifiSSIDIndex &&
+           a.wifiPasswordCharPos == b.wifiPasswordCharPos &&
+           a.wifiPasswordCharIdx == b.wifiPasswordCharIdx;
 }
 
 bool operator!=(const GuiStateSettings &a, const GuiStateSettings &b)
@@ -315,6 +336,9 @@ SmokeMateGUI::SmokeMateGUI(Adafruit_ST7789 &displayRef, Configuration &config) :
     m_guiState.history.clear();
 
     m_prevGuiState = m_guiState; // Initialize previous state to current state
+
+    m_wifiNetworkSSIDs.clear(); // Clear the WiFi SSID list
+    m_wifiNetworkRSSIs.clear(); // Clear the WiFi RSSI list
 }
 
 void SmokeMateGUI::begin()
@@ -418,6 +442,26 @@ void SmokeMateGUI::service(ulong currentTimeMSec)
             drawSettingsPanel(m_guiState);
         }
         break;
+
+    case GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_SSID:
+        // Draw WiFi SSID selection panel
+        m_isChartUpdateNeeded = true;
+        if ((m_guiState.settings != m_prevGuiState.settings) || m_isForcedGUIUpdate)
+        {
+            m_isForcedGUIUpdate = false; // Reset the forced update flag
+            drawWiFiSelectPanel();
+        }
+        break;
+
+    case GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_PASSWORD:
+        // Draw WiFi password entry panel
+        m_isChartUpdateNeeded = true;
+        if ((m_guiState.settings != m_prevGuiState.settings) || m_isForcedGUIUpdate)
+        {
+            m_isForcedGUIUpdate = false; // Reset the forced update flag
+            drawWiFiPasswordPanel();
+        }
+        break;
     }
     // drawChart(state.smokerHistory, state.foodHistory);
 
@@ -435,6 +479,14 @@ void SmokeMateGUI::updateState(const ControllerStatus &controllerStatus, const C
     m_guiState.status.fanPercent = map(controllerStatus.fanPWM, 0, 255, 0, 100);
     m_guiState.status.doorPercent = map(controllerStatus.doorPosition, config.doorClosePosition, config.doorOpenPosition, 0, 100);
     m_guiState.controllerStartTimeMSec = controllerStatus.controllerStartMSec;
+    m_guiState.footer.isWiFiConnected = controllerStatus.isWiFiConnected;
+    m_guiState.footer.RSSI = controllerStatus.RSSI;
+    m_guiState.footer.bars = controllerStatus.bars;
+    m_guiState.footer.ipAddress = controllerStatus.ipAddress;
+    m_guiState.footer.isControllerRunning = controllerStatus.isRunning;
+    m_guiState.footer.controllerRunTimeMSec = controllerStatus.controllerStartMSec > 0
+                                                  ? (millis() - controllerStatus.controllerStartMSec)
+                                                  : 0;
 }
 
 GuiState SmokeMateGUI::getState()
@@ -490,6 +542,31 @@ void SmokeMateGUI::commandMoveNext()
         if (settings.editingIndex >= 0 && settings.editingIndex < SETTINGS_COUNT - 1)
         {
             SETTINGS_LIST[settings.editingIndex].incFunc(m_config);
+        }
+        break;
+
+    case GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_SSID:
+        // Scroll through available WiFi networks
+        if (settings.wifiSSIDIndex < m_wifiNetworkSSIDs.size() - 1)
+        {
+            settings.wifiSSIDIndex++;
+        }
+        else
+        {
+            // Roll to top
+            settings.wifiSSIDIndex = 0;
+        }
+        break;
+
+    case GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_PASSWORD:
+        // Increment the character index in the WiFi password
+        if (settings.wifiPasswordCharIdx < strlen(WIFI_CHAR_SET) - 1)
+        {
+            settings.wifiPasswordCharIdx++;
+        }
+        else
+        {
+            settings.wifiPasswordCharIdx = 0;
         }
         break;
 
@@ -549,6 +626,32 @@ void SmokeMateGUI::commandMovePrevious()
             SETTINGS_LIST[settings.editingIndex].decFunc(m_config);
         }
         break;
+
+    case GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_SSID:
+        // Scroll through available WiFi networks
+        if (settings.wifiSSIDIndex > 0)
+        {
+            settings.wifiSSIDIndex--;
+        }
+        else
+        {
+            // Roll to bottom
+            settings.wifiSSIDIndex = m_wifiNetworkSSIDs.size() - 1;
+        }
+        break;
+
+    case GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_PASSWORD:
+        // Decrement the character index in the WiFi password
+        if (settings.wifiPasswordCharIdx > 0)
+        {
+            settings.wifiPasswordCharIdx--;
+        }
+        else
+        {
+            settings.wifiPasswordCharIdx = strlen(WIFI_CHAR_SET) - 1; // Wrap around to the last character
+        }
+        break;
+
     default:
         break;
     }
@@ -560,6 +663,7 @@ void SmokeMateGUI::commandSelect()
 {
     GuiStateHeader &header = m_guiState.header;       // Reference to the current header state
     GuiStateSettings &settings = m_guiState.settings; // Reference to the settings state
+    int len;                                          // Length of the WiFi password buffer
 
     if (m_isCommandQueued)
     {
@@ -589,9 +693,29 @@ void SmokeMateGUI::commandSelect()
         // Here you would typically handle the settings editing logic
         // For now, we will just reset to the settings state
         // If "Exit" is selected, leave edit mode
-        if (settings.cursor == SETTINGS_COUNT - 1)
+        if (settings.cursor == SETTINGS_EXIT_INDEX)
         {
             header.state = GUI_STATE_HEADER_SETTINGS;
+        }
+        else if (settings.cursor == SETTINGS_REBOOT_INDEX)
+        {
+            // Reboot the esp32 hadware commnand
+            ESP.restart();
+        }
+        else if (settings.cursor == SETTINGS_WIFI_SSID_INDEX)
+        {
+            header.state = GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_SSID; // Move to WiFi SSID edit state
+            startWiFiScan();                                         // Start WiFi scan to populate available networks
+            settings.wifiSSIDIndex = 0;                              // Reset the WiFi SSID index
+        }
+        else if (settings.cursor == SETTINGS_WIFI_PASSWORD_INDEX)
+        {
+            header.state = GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_PASSWORD; // Move to WiFi Password edit state
+            // Reset the WiFi password character index
+            settings.wifiPasswordCharPos = 0; // Reset the character position in the password
+            settings.wifiPasswordCharIdx = 0; // Reset the character index in the password
+            // Clear the WiFi password buffer
+            memset(m_wifiPasswordBuffer, 0, sizeof(m_wifiPasswordBuffer)); // Clear the password buffer
         }
         else
         {
@@ -606,12 +730,82 @@ void SmokeMateGUI::commandSelect()
         m_isNVRAMSaveRequired = true;                  // Set the flag to indicate that NVRAM save is required
         break;
 
+    case GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_SSID:
+
+        // Save selected SSID
+        strncpy(m_config.wifiSSID, m_wifiNetworkSSIDs[m_guiState.settings.wifiSSIDIndex].c_str(), sizeof(m_config.wifiSSID));
+        m_config.wifiSSID[sizeof(m_config.wifiSSID) - 1] = '\0'; // Ensure null termination
+        // Exit WiFi SSID selection
+        header.state = GUI_STATE_HEADER_SETTINGS_EDIT; // Move back to settings edit state
+        m_isNVRAMSaveRequired = true;                  // Set the flag to indicate that NVRAM save is required
+        // clear the wifi password for the next SSID
+        m_config.wifiPassword[0] = '\0';
+        break;
+
+    case GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_PASSWORD:
+        // Add selected character to password buffer
+        len = strlen(m_wifiPasswordBuffer);
+        if (len < sizeof(m_wifiPasswordBuffer) - 1)
+        {
+            m_wifiPasswordBuffer[len] = WIFI_CHAR_SET[m_guiState.settings.wifiPasswordCharIdx];
+            m_wifiPasswordBuffer[len + 1] = '\0';
+        }
+        m_isForcedGUIUpdate = true;
+        break;
+
     default:
         // If we reach here, it means we are in an unexpected state
         break;
     }
 
     m_isCommandQueued = true; // Set the command as queued
+}
+
+void SmokeMateGUI::commandConfirm()
+{
+    GuiStateHeader &header = m_guiState.header;       // Reference to the current header state
+    GuiStateSettings &settings = m_guiState.settings; // Reference to the settings state
+
+    if (m_isCommandQueued)
+    {
+        return; // Ignore if a command is already queued
+    }
+
+    switch (header.state)
+    {
+    case GUI_STATE_HEADER_STATUS:
+        // Do nothing on command in the status state
+        break;
+    case GUI_STATE_HEADER_CHART:
+        // Do nothing on command in the chart state
+        break;
+    case GUI_STATE_HEADER_SETTINGS:
+        // Do nothing on command in the settings state
+        break;
+    case GUI_STATE_HEADER_SETTINGS_EDIT:
+        // Leave settings edit mode
+        header.state = GUI_STATE_HEADER_SETTINGS; // Move back to settings state
+        settings.editingIndex = -1;               // Reset the editing index
+        m_isForcedGUIUpdate = true;               // Force GUI update
+        break;
+    case GUI_STATE_HEADER_SETTINGS_EDIT_VALUE:
+        // do nothing on command in the settings edit value state
+        break;
+    case GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_SSID:
+        // Do nothing on command in the WiFi SSID edit state
+        break;
+    case GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_PASSWORD:
+        // Save the WiFi password
+        strncpy(m_config.wifiPassword, m_wifiPasswordBuffer, sizeof(m_config.wifiPassword));
+        m_config.wifiPassword[sizeof(m_config.wifiPassword) - 1] = '\0';
+        m_wifiPasswordBuffer[0] = '\0'; // Clear buffer for next time
+        header.state = GUI_STATE_HEADER_SETTINGS_EDIT;
+        m_isNVRAMSaveRequired = true;
+        m_isForcedGUIUpdate = true;
+        break;
+
+        m_isCommandQueued = true; // Set the command as queued
+    }
 }
 
 bool SmokeMateGUI::isNVRAMSaveRequired()
@@ -641,22 +835,25 @@ void SmokeMateGUI::drawHeaderBlock(uint16_t x, uint16_t y, uint16_t width, uint1
 void SmokeMateGUI::drawHeader(const GuiStateHeader &header)
 {
     uint16_t settingsColor;
-    if (header.state == GUI_STATE_HEADER_SETTINGS_EDIT || header.state == GUI_STATE_HEADER_SETTINGS_EDIT_VALUE)
+    if (header.state == GUI_STATE_HEADER_SETTINGS_EDIT ||
+        header.state == GUI_STATE_HEADER_SETTINGS_EDIT_VALUE ||
+        header.state == GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_SSID ||
+        header.state == GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_PASSWORD)
     {
         settingsColor = COLOR_HEADER_SELECTED; // Highlight the settings block when editing
     }
     else
     {
-        settingsColor = (header.state == GUI_STATE_HEADER_SETTINGS) ? COLOR_HEADER_ACTIVE : COLOR_HEADER_PASSIVE;
+        settingsColor = (header.state == GUI_STATE_HEADER_SETTINGS) ? COLOR_HEADER_ACTIVE : COLOR_HEADER_PRIMARY;
     }
 
     // Draw the header blocks
     drawHeaderBlock(0, 0,
                     GUI_HEADER_BLOCK_WIDTH, GUI_HEADER_HEIGHT, 19, "STATUS",
-                    header.state == GUI_STATE_HEADER_STATUS ? COLOR_HEADER_ACTIVE : COLOR_HEADER_PASSIVE);
+                    header.state == GUI_STATE_HEADER_STATUS ? COLOR_HEADER_ACTIVE : COLOR_HEADER_PRIMARY);
     drawHeaderBlock(GUI_HEADER_BLOCK_WIDTH + 1, 0,
                     GUI_HEADER_BLOCK_WIDTH, GUI_HEADER_HEIGHT, 25, "CHART",
-                    header.state == GUI_STATE_HEADER_CHART ? COLOR_HEADER_ACTIVE : COLOR_HEADER_PASSIVE);
+                    header.state == GUI_STATE_HEADER_CHART ? COLOR_HEADER_ACTIVE : COLOR_HEADER_PRIMARY);
     drawHeaderBlock(2 * GUI_HEADER_BLOCK_WIDTH + 2, 0,
                     GUI_HEADER_BLOCK_WIDTH, GUI_HEADER_HEIGHT, 7, "SETTINGS",
                     settingsColor);
@@ -665,42 +862,46 @@ void SmokeMateGUI::drawHeader(const GuiStateHeader &header)
 void SmokeMateGUI::drawFooter(const GuiState &state, ulong elapsedMillis)
 {
     char timeStr[9];
+    m_tft.setTextSize(2);
+    m_tft.setTextColor(COLOR_TEXT);
+
+    String statusText = state.isControllerRunning ? "ON" : "OFF";
+
     if (state.isControllerRunning)
     {
-
-        m_tft.fillRect(0, GUI_FOOTER_OFFSET, SCREEN_WIDTH, GUI_FOOTER_HEIGHT, COLOR_HEADER_ACTIVE);
-        m_tft.setTextSize(2);
-        m_tft.setTextColor(COLOR_TEXT);
-
-        m_tft.setCursor(6, GUI_FOOTER_OFFSET + 2);
-        m_tft.print("Running");
-
-        // Display the elapsed time in HH:MM:SS format
-        m_tft.setCursor(SCREEN_WIDTH / 2 + 40, GUI_FOOTER_OFFSET + 2);
+        // Draw the footer background
+        m_tft.fillRect(0, GUI_FOOTER_Y_OFFSET, SCREEN_WIDTH, GUI_FOOTER_HEIGHT, COLOR_HEADER_ACTIVE);
 
         unsigned long totalSeconds = elapsedMillis / 1000;
         unsigned long hours = totalSeconds / 3600;
         unsigned long minutes = (totalSeconds % 3600) / 60;
         unsigned long seconds = totalSeconds % 60;
         snprintf(timeStr, sizeof(timeStr), "%02lu:%02lu:%02lu", hours, minutes, seconds);
-        m_tft.print(timeStr);
     }
     else
     {
-
-        m_tft.fillRect(0, GUI_FOOTER_OFFSET, SCREEN_WIDTH, GUI_FOOTER_HEIGHT, COLOR_HEADER_PASSIVE);
-        m_tft.setTextSize(2);
-        m_tft.setTextColor(COLOR_TEXT);
-
-        m_tft.setCursor(6, GUI_FOOTER_OFFSET + 2);
-        m_tft.print("Idle");
-
-        // Display the elapsed time in HH:MM:SS format
-        m_tft.setCursor(SCREEN_WIDTH / 2 + 40, GUI_FOOTER_OFFSET + 2);
-
+        // Draw the footer background for idle state
+        m_tft.fillRect(0, GUI_FOOTER_Y_OFFSET, SCREEN_WIDTH, GUI_FOOTER_HEIGHT, COLOR_HEADER_PRIMARY);
         snprintf(timeStr, sizeof(timeStr), "00:00:00");
-        m_tft.print(timeStr);
     }
+
+    if (m_guiState.footer.isWiFiConnected)
+    {
+        // Write the IP address in the footer
+        m_tft.setCursor(GUI_FOOTER_IP_X_OFFSET, GUI_FOOTER_Y_OFFSET + 8);
+        // Switch to a smaller text size for the IP address
+        m_tft.setTextSize(1);
+        m_tft.print(state.footer.ipAddress);
+        // Reset text size for the rest of the footer
+        m_tft.setTextSize(2);
+        // Draw the WiFi icon with the current RSSI and bars
+        drawWiFiIcon(GUI_FOOTER_WIFI_X_OFFSET, GUI_FOOTER_Y_OFFSET, m_guiState.footer.bars, m_guiState.footer.isWiFiConnected);
+    }
+
+    m_tft.setCursor(6, GUI_FOOTER_Y_OFFSET + 2);
+    m_tft.print(statusText);
+    m_tft.setCursor(GUI_FOOTER_CLOCK_X_OFFSET, GUI_FOOTER_Y_OFFSET + 2);
+    m_tft.print(timeStr);
 
     // Additional footer information can be added here
 }
@@ -969,18 +1170,107 @@ void SmokeMateGUI::drawSettingsPanel(const GuiState &state)
             else
             {
                 // Navigation mode: highlight with PASSIVE color
-                m_tft.fillRect(0, blockY + 1, SCREEN_WIDTH, GUI_SETTINGS_BLOCK_HEIGHT - 1, COLOR_HEADER_PASSIVE);
+                m_tft.fillRect(0, blockY + 1, SCREEN_WIDTH, GUI_SETTINGS_BLOCK_HEIGHT - 1, COLOR_HEADER_PRIMARY);
             }
         }
 
         m_tft.setCursor(GUI_SETTINGS_LABEL_OFFSET, blockY + 2);
         m_tft.setTextColor(COLOR_TEXT);
-        m_tft.print(SETTINGS_LIST[i].label);
+
+        if (i == SETTINGS_WIFI_SSID_INDEX)
+        {
+            // append the SSID label to the settings list item from the config
+            String ssidDisplay = m_config.wifiSSID;
+            if (ssidDisplay.length() > MAX_WIFI_SSID_LENGTH)
+            {
+                ssidDisplay = ssidDisplay.substring(0, MAX_WIFI_SSID_LENGTH);
+            }
+            m_tft.print(String(SETTINGS_LIST[i].label) + ": " + ssidDisplay);
+        }
+        else
+        {
+            m_tft.print(SETTINGS_LIST[i].label);
+        }
 
         if (SETTINGS_LIST[i].getValue)
         {
             m_tft.setCursor(GUI_SETTINGS_VALUE_OFFSET, blockY + 2);
             m_tft.print(SETTINGS_LIST[i].getValue(m_config));
         }
+    }
+}
+
+void SmokeMateGUI::drawWiFiSelectPanel()
+{
+    m_tft.fillRect(0, GUI_SETTINGS_PANEL_Y_OFFSET, SCREEN_WIDTH, GUI_SETTINGS_PANEL_HEIGHT, COLOR_BG);
+    m_tft.setTextColor(COLOR_TEXT);
+    m_tft.setTextSize(2);
+
+    int count = m_wifiNetworkSSIDs.size();
+    for (int i = 0; (i < min(count, MAX_WIFI_NETWORKS)); ++i)
+    {
+        int blockY = GUI_SETTINGS_PANEL_Y_OFFSET + i * GUI_SETTINGS_BLOCK_HEIGHT;
+        if (i == m_guiState.settings.wifiSSIDIndex)
+            m_tft.fillRect(0, blockY + 1, SCREEN_WIDTH, GUI_SETTINGS_BLOCK_HEIGHT - 1, COLOR_HEADER_PRIMARY);
+        m_tft.setCursor(GUI_SETTINGS_LABEL_OFFSET, blockY + 2);
+        // Print the SSID and (RSSI) in parentheses
+        String ssidDisplay = m_wifiNetworkSSIDs[i];
+        if (ssidDisplay.length() > MAX_WIFI_SSID_LENGTH)
+        {
+            ssidDisplay = ssidDisplay.substring(0, MAX_WIFI_SSID_LENGTH);
+        }
+        String wifiInfo = ssidDisplay + " (" + String(m_wifiNetworkRSSIs[i]) + ")";
+        m_tft.print(wifiInfo);
+    }
+}
+
+void SmokeMateGUI::drawWiFiPasswordPanel()
+{
+    m_tft.fillRect(0, GUI_SETTINGS_PANEL_Y_OFFSET, SCREEN_WIDTH, GUI_SETTINGS_PANEL_HEIGHT, COLOR_BG);
+    m_tft.setTextColor(COLOR_TEXT);
+    m_tft.setTextSize(2);
+    m_tft.setCursor(GUI_SETTINGS_LABEL_OFFSET, GUI_SETTINGS_PANEL_Y_OFFSET + 10);
+    m_tft.print("Enter WiFi Password:");
+    m_tft.setCursor(GUI_SETTINGS_LABEL_OFFSET, GUI_SETTINGS_PANEL_Y_OFFSET + 40);
+    m_tft.print(m_wifiPasswordBuffer);
+    // Show current char selection
+    m_tft.setCursor(GUI_SETTINGS_LABEL_OFFSET, GUI_SETTINGS_PANEL_Y_OFFSET + 80);
+    m_tft.print(WIFI_CHAR_SET[m_guiState.settings.wifiPasswordCharIdx]);
+}
+
+void SmokeMateGUI::startWiFiScan()
+{
+    m_wifiNetworkSSIDs.clear();
+    m_wifiNetworkRSSIs.clear();
+
+    int n = WiFi.scanNetworks();
+    for (int i = 0; i < min(n, MAX_WIFI_NETWORKS); ++i)
+    {
+        m_wifiNetworkSSIDs.push_back(WiFi.SSID(i));
+        m_wifiNetworkRSSIs.push_back(WiFi.RSSI(i));
+    }
+    m_guiState.settings.wifiSSIDIndex = 0;
+    m_isForcedGUIUpdate = true;
+}
+
+void SmokeMateGUI::drawWiFiIcon(int x, int y, int bars, bool connected)
+{
+    // Icon fits in 16x16 pixels, y is the top of the icon area (should be GUI_FOOTER_Y_OFFSET + 2)
+    uint16_t color = connected ? COLOR_TEXT : ST77XX_RED;
+    int barWidth = 4;
+    int barSpacing = 2;
+    int baseHeight = 4; // Smallest bar
+    int maxHeight = 13; // Tallest bar (leaves room for dot at bottom)
+
+    // Draw up to 4 bars, left to right
+    for (int i = 0; i < 4; ++i)
+    {
+        int barHeight = baseHeight + i * 3; // 4, 7, 10, 13
+        int barX = x + i * (barWidth + barSpacing);
+        int barY = y + (16 - barHeight); // Align bottom of icon to y+16
+        if (bars > i)
+            m_tft.fillRect(barX, barY, barWidth, barHeight, color);
+        else
+            m_tft.drawRect(barX, barY, barWidth, barHeight, color);
     }
 }

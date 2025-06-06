@@ -5,6 +5,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
 #include <SPI.h>
+#include <WiFi.h>
 #include "types.h"
 #include "knob.h"
 #include "nvram.h"
@@ -23,6 +24,10 @@
 // ============================ CONSTANTS =================================
 #define BAUD_RATE 115200
 #define NVRAM_START_ADDRESS 0
+
+#define WIFI_SCAN_TIMEOUT_MSEC 5000 // Timeout for WiFi scan in milliseconds
+#define MAX_WIFI_NETWORKS 8         // Maximum number of WiFi networks to store
+#define MAX_WIFI_CONNECT_ATTEMPTS 3 // Maximum number of attempts to connect to WiFi
 
 // Default configuration values
 #define DEFAULT_TEMPERATURE_TARGET 250

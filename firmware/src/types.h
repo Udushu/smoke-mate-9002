@@ -25,6 +25,8 @@ struct ControllerStatus
     int doorPosition;
     int RSSI;
     int bars;
+    String ipAddress;
+    bool isWiFiConnected;
 };
 
 struct Configuration
@@ -58,6 +60,7 @@ struct Configuration
     bool isForcedDoorPosition;
     int forcedDoorPosition;
 
+    bool isWiFiEnabled;    // Flag to indicate if WiFi is enabled
     char wifiSSID[65];     // WiFi SSID
     char wifiPassword[65]; // WiFi Password
 };

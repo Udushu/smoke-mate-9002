@@ -3,8 +3,16 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
 #include "types.h"
+#include <esp_system.h>
+#include <vector>
+#include <WiFi.h>
 
 #include <deque>
+
+// WIFI CONSTANTS =================================================================================
+#define WIFI_SCAN_TIMEOUT_MSEC 5000 // Timeout for WiFi scan in milliseconds
+#define MAX_WIFI_NETWORKS 8         // Maximum number of WiFi networks to store
+#define MAX_WIFI_SSID_LENGTH 18     // Maximum length of WiFi SSID
 
 // CHART CONSTANTS ================================================================================
 #define GUI_MAX_HISTORY_ENTRIES 1800                      // Maximum number of temperature history entries to keep
@@ -17,11 +25,12 @@
 #define HEX_RGB565(hex) ((((hex) >> 16 & 0xF8) << 8) | (((hex) >> 8 & 0xFC) << 3) | ((hex) & 0xFF >> 3))
 
 #define COLOR_BG HEX_RGB565(0x000000)              // Dark center background
-#define COLOR_HEADER_PASSIVE HEX_RGB565(0xFF6600)  // Orange top/bottom
+#define COLOR_HEADER_PRIMARY HEX_RGB565(0xFF6600)  // Orange top/bottom
 #define COLOR_HEADER_RUNNING HEX_RGB565(0x008610)  // Orange top/bottom
 #define COLOR_HEADER_ACTIVE HEX_RGB565(0x0083FE)   // Blue for active state
 #define COLOR_HEADER_SELECTED HEX_RGB565(0x003D77) // Dark Blue for active selected state
 #define COLOR_TEXT HEX_RGB565(0xFFFFFF)
+
 #define COLOR_CHART_SMOKER HEX_RGB565(0xFF6600)    // Red for smoker temperature
 #define COLOR_CHART_FOOD HEX_RGB565(0x0083FE)      // Green for food temperature
 #define COLOR_CHART_TARGET HEX_RGB565(0x00FFD0)    // Blue for target temperature
@@ -35,20 +44,23 @@
 #define GUI_HEADER_HEIGHT 40
 #define GUI_HEADER_BLOCK_WIDTH 106 // Width of each header block
 
-#define GUI_FOOTER_OFFSET 220 // Footer starts at this Y position
+#define GUI_FOOTER_Y_OFFSET 220 // Footer starts at this Y position
 #define GUI_FOOTER_HEIGHT 20
+#define GUI_FOOTER_CLOCK_X_OFFSET 220 // Offset for the clock in the footer
+#define GUI_FOOTER_WIFI_X_OFFSET 190  // Offset for the WiFi icon in the footer
+#define GUI_FOOTER_IP_X_OFFSET 100    // Offset for the IP address in the footer
 
-#define GUI_STATUS_PANEL_Y_OFFSET GUI_HEADER_HEIGHT                     // Y offset for the status canvas
-#define GUI_STATUS_PANEL_HEIGHT (GUI_FOOTER_OFFSET - GUI_HEADER_HEIGHT) // Height of the status canvas
+#define GUI_STATUS_PANEL_Y_OFFSET GUI_HEADER_HEIGHT                       // Y offset for the status canvas
+#define GUI_STATUS_PANEL_HEIGHT (GUI_FOOTER_Y_OFFSET - GUI_HEADER_HEIGHT) // Height of the status canvas
 #define GUI_STATUS_PANEL_BLOCK_WIDTH (SCREEN_WIDTH / 2)
 #define GUI_STATUS_PANEL_BLOCK_COUNT 5
 #define GUI_STATUS_PANEL_BLOCK_HEIGHT (GUI_STATUS_PANEL_HEIGHT / GUI_STATUS_PANEL_BLOCK_COUNT)
 
 #define GUI_CHART_PANEL_Y_OFFSET GUI_HEADER_HEIGHT
-#define GUI_CHART_PANEL_HEIGHT (GUI_FOOTER_OFFSET - GUI_HEADER_HEIGHT) // Height of the chart canvas
+#define GUI_CHART_PANEL_HEIGHT (GUI_FOOTER_Y_OFFSET - GUI_HEADER_HEIGHT) // Height of the chart canvas
 
-#define GUI_SETTINGS_PANEL_Y_OFFSET GUI_HEADER_HEIGHT                     // Y offset for the settings canvas
-#define GUI_SETTINGS_PANEL_HEIGHT (GUI_FOOTER_OFFSET - GUI_HEADER_HEIGHT) // Height of the settings canvas
+#define GUI_SETTINGS_PANEL_Y_OFFSET GUI_HEADER_HEIGHT                       // Y offset for the settings canvas
+#define GUI_SETTINGS_PANEL_HEIGHT (GUI_FOOTER_Y_OFFSET - GUI_HEADER_HEIGHT) // Height of the settings canvas
 #define GUI_SETTINGS_BLOCK_COUNT 8
 #define GUI_SETTINGS_BLOCK_HEIGHT (GUI_SETTINGS_PANEL_HEIGHT / GUI_SETTINGS_BLOCK_COUNT)
 #define GUI_SETTINGS_VALUE_OFFSET 220 // Offset for the value in settings panel
@@ -85,6 +97,8 @@ enum GUI_STATE_ACTIVE_HEADER
     GUI_STATE_HEADER_SETTINGS,
     GUI_STATE_HEADER_SETTINGS_EDIT,
     GUI_STATE_HEADER_SETTINGS_EDIT_VALUE,
+    GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_SSID,
+    GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_PASSWORD,
 };
 
 struct TemperatureHistoryEntry
@@ -114,6 +128,21 @@ struct GuiStateSettings
     int cursor;       // Current cursor position in settings
     int scroll;       // Current scroll position in settings
     int editingIndex; // Index of the setting being edited, -1 if not editing
+
+    int wifiSSIDIndex; // Index of the WiFi SSID being edited
+
+    int wifiPasswordCharPos; // Index of the WiFi Password being edited
+    int wifiPasswordCharIdx; // Character index in the WiFi Password being edited
+};
+
+struct GuiStateFooter
+{
+    bool isControllerRunning;    // Flag to indicate if the controller is running
+    ulong controllerRunTimeMSec; // Controller run time in milliseconds
+    bool isWiFiConnected;        // Flag to indicate if WiFi is connected
+    String ipAddress;            // IP address of the controller
+    int RSSI;                    // WiFi RSSI value
+    int bars;                    // WiFi signal strength in bars (0-5)
 };
 
 struct GuiState
@@ -121,11 +150,11 @@ struct GuiState
     GuiStateHeader header; // Current active header state
     GuiStateStatus status;
     GuiStateSettings settings; // Settings state
-
-    bool isControllerRunning;
-    ulong controllerStartTimeMSec;
+    GuiStateFooter footer;     // Footer state
 
     std::deque<TemperatureHistoryEntry> history;
+    bool isControllerRunning;
+    ulong controllerStartTimeMSec;
 };
 
 // --- Settings metadata and helpers ---
@@ -150,6 +179,7 @@ public:
     void commandMoveNext();
     void commandMovePrevious();
     void commandSelect();
+    void commandConfirm();
 
     bool isNVRAMSaveRequired();
 
@@ -158,6 +188,11 @@ private:
     GuiState m_guiState;     // Current GUI state
     GuiState m_prevGuiState; // Previous GUI state for comparison
     Configuration &m_config; // Reference to the configuration object
+
+    std::vector<String> m_wifiNetworkSSIDs; // List of available WiFi networks
+    std::vector<int> m_wifiNetworkRSSIs;    // RSSI values for the available networks
+
+    char m_wifiPasswordBuffer[65] = {0};
 
     bool m_isCommandQueued = false;                                   // Flag to indicate if a command is queued
     bool m_isControllerRunning = false;                               // Flag to indicate if the controller is running
@@ -173,6 +208,8 @@ private:
     void drawStausPanel(const GuiStateStatus &state);
     void drawChartPanel(const std::deque<TemperatureHistoryEntry> &history);
     void drawSettingsPanel(const GuiState &state);
+    void drawWiFiSelectPanel();
+    void drawWiFiPasswordPanel();
 
     void drawHeaderBlock(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t textOffset,
                          const char *text, uint16_t color);
@@ -180,6 +217,10 @@ private:
     void drawStatusBlock(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
                          const char *text);
     void drawStatusLine(uint16_t n, const char *label, const char *value);
+
+    void startWiFiScan(); // Start WiFi scan to populate available networks
+
+    void drawWiFiIcon(int x, int y, int bars, bool connected);
 };
 
 #endif // GUI_H
