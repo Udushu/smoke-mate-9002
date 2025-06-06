@@ -31,24 +31,32 @@ struct Configuration
 {
     int temperatureTarget;
     int temperatureIntervalMSec;
-    int forcedFanPWM;
-    bool isForcedFanPWM;
-    int forcedDoorPosition;
-    bool isForcedDoorPosition;
+
     bool isPIDEnabled;
     float kP;
     float kI;
     float kD;
+
     int bangBangLowThreshold;
     int bangBangHighThreshold;
     int bangBangHysteresis;
     int bangBangFanSpeed;
+
     int doorOpenPosition;
     int doorClosePosition;
+
     float themometerSmokerGain;
     float themometerSmokerOffset;
     float themometerFoodGain;
     float themometerFoodOffset;
+
+    bool isThemometerSimulated;
+
+    bool isForcedFanPWM;
+    int forcedFanPWM;
+
+    bool isForcedDoorPosition;
+    int forcedDoorPosition;
 };
 
 #endif // TYPES_H

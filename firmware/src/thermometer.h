@@ -7,7 +7,6 @@
 #include "debug.h"
 
 // #define THERMOMETER_DEBUG
-# define THERMOMETER_SIMULATE
 
 class Thermometer
 {
@@ -27,6 +26,7 @@ private:
     float m_offset;
 
     bool m_isNewTemperatureAvailable;
+    bool m_isSimulated = false;
 
     void simulateTemperature();
 
@@ -41,6 +41,7 @@ public:
     ulong getInterval();
     bool isNewTemperatureAvailable();
     void setCalibration(float gain, float offset);
+    void setSimulated(bool isSimulated);
 };
 
 #endif

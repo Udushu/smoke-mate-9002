@@ -75,6 +75,10 @@ void setup()
   // Initalize the interface
   g_smokeMateGUI.begin();
 
+  // Initialize the thermometers
+  g_thermometerSmoker.setSimulated(g_configuration.isThemometerSimulated);
+  g_thermometerFood.setSimulated(g_configuration.isThemometerSimulated);
+
   // Blink LED to indicate startup
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH); // Turn off LED
@@ -104,6 +108,7 @@ void loop()
 
   loopServiceKnobButtonEvents();
   loopUpdateControllerStatus();
+  updateConfiguration();
 
   // Do actions on the controller status change
   if (g_controllerStatus.isRunning != g_prevIsRunning)
@@ -200,6 +205,8 @@ void loopServiceKnobButtonEvents()
 
 void updateConfiguration()
 {
+  g_thermometerSmoker.setSimulated(g_configuration.isThemometerSimulated);
+  g_thermometerFood.setSimulated(g_configuration.isThemometerSimulated);
 }
 
 void loopUpdateControllerStatus()
@@ -234,24 +241,31 @@ void loadDefaultConfiguration(Configuration *ptr_configuration)
 {
   ptr_configuration->temperatureTarget = DEFAULT_TEMPERATURE_TARGET;
   ptr_configuration->temperatureIntervalMSec = DEFAULT_TEMPERATURE_INTERVAL_MSEC;
-  ptr_configuration->forcedFanPWM = DEFAULT_BANG_BANG_FAN_SPEED;
-  ptr_configuration->isForcedFanPWM = false;
-  ptr_configuration->forcedDoorPosition = 0;
-  ptr_configuration->isForcedDoorPosition = false;
-  ptr_configuration->isPIDEnabled = false;
+
+  ptr_configuration->isPIDEnabled = true;
   ptr_configuration->kP = DEFAULT_PID_KP;
   ptr_configuration->kI = DEFAULT_PID_KI;
   ptr_configuration->kD = DEFAULT_PID_KD;
+
   ptr_configuration->bangBangLowThreshold = DEFAULT_BANG_BANG_THRESHOLD_LOW;
   ptr_configuration->bangBangHighThreshold = DEFAULT_BANG_BANG_THRESHOLD_HIGH;
   ptr_configuration->bangBangHysteresis = DEFAULT_BANG_BANG_HYSTERESIS;
   ptr_configuration->bangBangFanSpeed = DEFAULT_BANG_BANG_FAN_SPEED;
+
   ptr_configuration->doorOpenPosition = DEFAULT_DOOR_OPEN_POSITION;
   ptr_configuration->doorClosePosition = DEFAULT_DOOR_CLOSE_POSITION;
+
   ptr_configuration->themometerSmokerGain = DEFAULT_THERMOMETER_SMOKER_GAIN;
   ptr_configuration->themometerSmokerOffset = DEFAULT_THERMOMETER_SMOKER_OFFSET;
   ptr_configuration->themometerFoodGain = DEFAULT_THERMOMETER_FOOD_GAIN;
   ptr_configuration->themometerFoodOffset = DEFAULT_THERMOMETER_FOOD_OFFSET;
+
+  ptr_configuration->isThemometerSimulated = false; // Start with real thermometers
+
+  ptr_configuration->isForcedFanPWM = false;
+  ptr_configuration->forcedFanPWM = DEFAULT_BANG_BANG_FAN_SPEED;
+  ptr_configuration->isForcedDoorPosition = false;
+  ptr_configuration->forcedDoorPosition = 0;
 }
 
 void setupInitializeNVRAM()

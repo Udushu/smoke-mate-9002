@@ -182,6 +182,10 @@ static String getFoodOffset(const Configuration &c) { return String(c.themometer
 void incFoodOffset(Configuration &c) { c.themometerFoodOffset += 0.1f; }
 void decFoodOffset(Configuration &c) { c.themometerFoodOffset -= 0.1f; }
 
+static String getIsThemometerSimulated(const Configuration &c) { return c.isThemometerSimulated ? "Yes" : "No"; }
+void incIsThemometerSimulated(Configuration &c) { c.isThemometerSimulated = !c.isThemometerSimulated; }
+void decIsThemometerSimulated(Configuration &c) { c.isThemometerSimulated = !c.isThemometerSimulated; }
+
 // ENABLE MANUAL FAN CONTROL ======================================================================
 static String getIsForcedFan(const Configuration &c) { return c.isForcedFanPWM ? "Yes" : "No"; }
 void incIsForcedFan(Configuration &c) { c.isForcedFanPWM = !c.isForcedFanPWM; }
@@ -242,6 +246,8 @@ static const SettingItem SETTINGS_LIST[] = {
     {"T_smoker Offset", getSmokerOffset, incSmokerOffset, decSmokerOffset},
     {"T_food Gain", getFoodGain, incFoodGain, decFoodGain},
     {"T_food Offset", getFoodOffset, incFoodOffset, decFoodOffset},
+
+    {"Sim. Themometer", getIsThemometerSimulated, incIsThemometerSimulated, decIsThemometerSimulated},
 
     {"Manual Fan", getIsForcedFan, incIsForcedFan, decIsForcedFan},
     {"Forced Fan PWM", getForcedFanPWM, incForcedFanPWM, decForcedFanPWM},

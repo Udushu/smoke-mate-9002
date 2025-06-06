@@ -31,9 +31,9 @@
 #define DEFAULT_BANG_BANG_THRESHOLD_LOW 240
 #define DEFAULT_BANG_BANG_HYSTERESIS 5
 #define DEFAULT_BANG_BANG_FAN_SPEED 255
-#define DEFAULT_DOOR_OPEN_POSITION 90
-#define DEFAULT_DOOR_CLOSE_POSITION 0
-#define DEFAULT_PID_KP 1.0
+#define DEFAULT_DOOR_OPEN_POSITION 110
+#define DEFAULT_DOOR_CLOSE_POSITION 4
+#define DEFAULT_PID_KP 4.0
 #define DEFAULT_PID_KI 0.0
 #define DEFAULT_PID_KD 0.0
 #define DEFAULT_THERMOMETER_SMOKER_GAIN 1.0
@@ -91,5 +91,6 @@ void setupInitializeGuiState(GuiState &guiState);
 void setupInitializeControllerStatus(ControllerStatus &controllerStatus);
 void loopServiceKnobButtonEvents();
 void loopUpdateControllerStatus();
+void updateConfiguration();
 
 #endif // MAIN_H
