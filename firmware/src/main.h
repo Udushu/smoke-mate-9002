@@ -6,6 +6,7 @@
 #include <Adafruit_ST7789.h>
 #include <SPI.h>
 #include <WiFi.h>
+#include <ArduinoOTA.h>
 #include "types.h"
 #include "knob.h"
 #include "nvram.h"

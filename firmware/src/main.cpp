@@ -98,7 +98,7 @@ void setup()
 void loop()
 {
 
-  // return;
+  ArduinoOTA.handle();
 
   // Get the current time in milliseconds
   g_loopCurrentTimeMSec = millis();
@@ -396,5 +396,22 @@ void connectToWiFi()
 
     attempts++;
     delay(1000); // Wait before retrying
+  }
+
+  if (g_controllerStatus.isWiFiConnected)
+  {
+    // OTA setup
+    ArduinoOTA.setHostname("smokemate9002");
+
+    ArduinoOTA.onStart([]() {});
+    ArduinoOTA.onEnd([]() {});
+    ArduinoOTA.onProgress(
+        [](unsigned int progress, unsigned int total)
+        {
+          // Optionally show progress on your display
+        });
+    ArduinoOTA.onError([](ota_error_t error) {});
+
+    ArduinoOTA.begin();
   }
 }
