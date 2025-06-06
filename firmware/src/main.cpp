@@ -38,6 +38,9 @@ bool g_prevIsRunning = false;        // Previous running state for the controlle
 // Temperature Controller
 TemperatureController g_temperatureController(g_controllerStatus, g_configuration, g_blowerMotor, g_door);
 
+// Webserver
+WebServer g_webServer = WebServer(WEB_SERVER_PORT, g_controllerStatus, g_configuration);
+
 void setup()
 {
 
@@ -90,6 +93,11 @@ void setup()
     // If WiFi is enabled, attempt to connect
     DEBUG_PRINTLN("WiFi is enabled, attempting to connect...");
     connectToWiFi();
+    if (g_controllerStatus.isWiFiConnected)
+    {
+      DEBUG_PRINTLN("WiFi connected successfully.");
+      g_webServer.begin(); // Start the web server
+    }
   }
 
   digitalWrite(PIN_LED, LOW); // Turn off LED - setup is now done
@@ -144,6 +152,12 @@ void loop()
   if (!g_controllerStatus.isRunning && g_configuration.isForcedDoorPosition)
   {
     g_door.setPosition(g_configuration.forcedDoorPosition); // Set the door position if forced
+  }
+
+  // Check nvram save request
+  if (g_webServer.isNVRAMSaveRequired())
+  {
+    g_nvram.writeNVRAM(); // Write the configuration to NVRAM
   }
 
   // Check the 0.5 second timer

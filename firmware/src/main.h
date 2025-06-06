@@ -17,12 +17,14 @@
 #include "temperaturecontroller.h"
 #include "tftdebug.h"
 #include "debug.h"
+#include "webserver.h"
 
 // ============================ COMPILATION FLAGS =========================
 // #define DEBUG_MAIN
 // #define NVRAM_DELETE_ON_STARTUP
 
 // ============================ CONSTANTS =================================
+#define WEB_SERVER_PORT 80 // Web server port
 #define BAUD_RATE 115200
 #define NVRAM_START_ADDRESS 0
 
