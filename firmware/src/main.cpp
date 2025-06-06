@@ -165,18 +165,24 @@ void loopServiceKnobButtonEvents()
   // Check for the long press on the knob
   if (g_knob.isLongButtonPressed())
   {
-    // Toggle the controller running state
-    g_controllerStatus.isRunning = !g_controllerStatus.isRunning;
-    if (g_controllerStatus.isRunning)
+    // Check on the current GUI state
+    if (g_smokeMateGUI.getState().header.state == GUI_STATE_HEADER_STATUS ||
+        g_smokeMateGUI.getState().header.state == GUI_STATE_HEADER_CHART ||
+        g_smokeMateGUI.getState().header.state == GUI_STATE_HEADER_SETTINGS)
     {
-      // Start the controller
-      g_controllerStatus.controllerStartMSec = g_loopCurrentTimeMSec;
-      // g_blowerMotor.start(); // Start the blower motor
-    }
-    else
-    {
-      // Stop the controller
-      // g_blowerMotor.stop(); // Stop the blower motor
+      // Toggle the controller running state
+      g_controllerStatus.isRunning = !g_controllerStatus.isRunning;
+      if (g_controllerStatus.isRunning)
+      {
+        // Start the controller
+        g_controllerStatus.controllerStartMSec = g_loopCurrentTimeMSec;
+        // g_blowerMotor.start(); // Start the blower motor
+      }
+      else
+      {
+        // Stop the controller
+        // g_blowerMotor.stop(); // Stop the blower motor
+      }
     }
   }
 
