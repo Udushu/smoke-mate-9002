@@ -146,7 +146,7 @@ public:
     void service(ulong currentTimeMSec);
 
     void updateState(const ControllerStatus &controllerStatus, const Configuration &config);
-
+    GuiState getState();
     void commandMoveNext();
     void commandMovePrevious();
     void commandSelect();

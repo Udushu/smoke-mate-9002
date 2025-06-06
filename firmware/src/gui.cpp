@@ -437,6 +437,12 @@ void SmokeMateGUI::updateState(const ControllerStatus &controllerStatus, const C
     m_guiState.controllerStartTimeMSec = controllerStatus.controllerStartMSec;
 }
 
+GuiState SmokeMateGUI::getState()
+{
+    // Return the current GUI state
+    return m_guiState;
+}
+
 void SmokeMateGUI::commandMoveNext()
 {
     GuiStateHeader &header = m_guiState.header;       // Reference to the current header state
