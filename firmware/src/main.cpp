@@ -417,12 +417,45 @@ void connectToWiFi()
     // OTA setup
     ArduinoOTA.setHostname("smokemate9002");
 
-    ArduinoOTA.onStart([]() {});
-    ArduinoOTA.onEnd([]() {});
+    ArduinoOTA.onStart(
+        []()
+        {
+          Serial.println("OTA Update Starting...");
+          // Show message on TFT
+          g_tftDisplay.fillRect(0, 260, 240, 60, ST77XX_BLACK); // Clear area
+          g_tftDisplay.setCursor(10, 280);
+          g_tftDisplay.setTextColor(ST77XX_YELLOW, ST77XX_BLACK);
+          g_tftDisplay.setTextSize(2);
+          g_tftDisplay.print("OTA Update...");
+        });
+    ArduinoOTA.onEnd(
+        []()
+        {
+          // Print to serial
+          Serial.println("OTA Update Complete!");
+          // Show message on TFT
+          g_tftDisplay.fillRect(0, 260, 240, 60, ST77XX_BLACK); // Clear area
+          g_tftDisplay.setCursor(10, 280);
+          g_tftDisplay.setTextColor(ST77XX_GREEN, ST77XX_BLACK);
+          g_tftDisplay.setTextSize(2);
+          g_tftDisplay.print("OTA Done!");
+        });
     ArduinoOTA.onProgress(
         [](unsigned int progress, unsigned int total)
         {
-          // Optionally show progress on your display
+          // Calculate percentage
+          int percent = (progress * 100) / total;
+
+          // Print to serial
+          Serial.printf("OTA Progress: %u%%\r\n", percent);
+
+          // Show progress on TFT (simple example)
+          g_tftDisplay.fillRect(10, 300, 220, 10, ST77XX_BLACK);                   // Clear previous bar
+          g_tftDisplay.fillRect(10, 300, (220 * percent) / 100, 10, ST77XX_GREEN); // Draw progress bar
+          g_tftDisplay.setCursor(10, 280);
+          g_tftDisplay.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
+          g_tftDisplay.setTextSize(2);
+          g_tftDisplay.printf("OTA: %d%%", percent);
         });
     ArduinoOTA.onError([](ota_error_t error) {});
 

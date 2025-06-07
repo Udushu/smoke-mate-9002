@@ -60,8 +60,8 @@
 // Thermometer pins
 #define PIN_THERMOMETER_SO 19        // Shared SO (data out)
 #define PIN_THERMOMETER_CLK 15       // Shared Clock (separate from TFT)
-#define PIN_THERMOMETER_FOOD_CS 32   // Thermocouple #1 Chip Select
-#define PIN_THERMOMETER_SMOKER_CS 33 // Thermocouple #2 Chip Select
+#define PIN_THERMOMETER_FOOD_CS 33   // Thermocouple #1 Chip Select
+#define PIN_THERMOMETER_SMOKER_CS 32 // Thermocouple #2 Chip Select
 
 // TFT display pins
 #define TFT_CS 5
