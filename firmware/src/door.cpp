@@ -10,6 +10,7 @@ Door::Door(uint8_t pin, uint closedPos, uint openPos, ulong stepMoveTimeMSec)
       m_stepMoveTimeMSec(stepMoveTimeMSec)
 {
     m_prevState = m_state;
+    m_lastSetPositionTimeMSec = 0; // Initialize last set position time
 }
 
 void Door::begin()
@@ -84,6 +85,9 @@ void Door::service(ulong currentTimeMSec)
 
 void Door::setPosition(uint pos)
 {
+    ulong currentTimeMSec = millis(); // Get the current time in milliseconds
+
+    // If the position is out of bounds, constrain it to the allowed range
 #ifdef DOOR_DEBUG
     DEBUG_PRINTLN("DOOR::setPosition to " + String(pos));
 #endif
@@ -99,16 +103,27 @@ void Door::setPosition(uint pos)
     // Make sure that the position is not the same as the current position
     if (pos == m_currentPosition)
     {
+        if (currentTimeMSec - m_lastSetPositionTimeMSec < DOOR_SERVO_MIN_SET_POSITION_TIMEOUT_MSEC)
+        {
 #ifdef DOOR_DEBUG
-        DEBUG_PRINTLN("DOOR::setPosition - Allready There Position");
+            DEBUG_PRINTLN("DOOR::setPosition - Allready There Position");
 #endif
-        return;
+            return;
+        }
+        else
+        {
+            m_lastSetPositionTimeMSec = currentTimeMSec; // Update last set position time
+        }
     }
 
     pos = constrain(pos, m_closedPosition, m_openPosition); // Constrain the position to the allowed range
 
     // Calcuate the travel time based on the step move time and the distance to travel
     m_traveTimeMsec = abs(static_cast<int>(m_currentPosition) - static_cast<int>(pos)) * DOOR_STEP_MOVE_TIME_MSEC;
+    if (m_traveTimeMsec < DOOR_SERVO_MIN_MOVE_TIME_MSEC)
+    {
+        m_traveTimeMsec = DOOR_SERVO_MIN_MOVE_TIME_MSEC; // Ensure minimum travel time
+    }
     m_demandedPosition = pos;
     m_servo.attach(m_pin, DOOR_SERVO_MIN_PULSE_WIDTH, DOOR_SERVO_MAX_PULSE_WIDTH); // Attach servo with min and max pulse width
     m_state = DOOR_STARTING;                                                       // Set state to starting

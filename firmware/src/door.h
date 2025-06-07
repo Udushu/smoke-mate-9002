@@ -5,10 +5,13 @@
 #include "types.h"
 #include "debug.h"
 
-#define DOOR_DEBUG
-#define DOOR_STEP_MOVE_TIME_MSEC 5UL    // Default step move time in milliseconds (type: ulong)
-#define DOOR_SERVO_MIN_PULSE_WIDTH 500  // Minimum pulse width for the servo (in microseconds)
-#define DOOR_SERVO_MAX_PULSE_WIDTH 2500 // Maximum pulse width for the servo (in microseconds)
+// #define DOOR_DEBUG
+#define DOOR_STEP_MOVE_TIME_MSEC 5UL        // Default step move time in milliseconds (type: ulong)
+#define DOOR_SERVO_MIN_MOVE_TIME_MSEC 100UL // Minimum time to move the servo (in milliseconds)
+#define DOOR_SERVO_MIN_PULSE_WIDTH 500      // Minimum pulse width for the servo (in microseconds)
+#define DOOR_SERVO_MAX_PULSE_WIDTH 2500     // Maximum pulse width for the servo (in microseconds)
+
+#define DOOR_SERVO_MIN_SET_POSITION_TIMEOUT_MSEC 1000 // Minimum time to wait before setting a new position (in milliseconds)
 
 enum DoorState
 {
@@ -45,6 +48,7 @@ private:
     uint m_openPosition;
     uint m_currentPosition;
     uint m_demandedPosition;
+    ulong m_lastSetPositionTimeMSec; // Last time the position was set
     Servo m_servo;
 };
 
