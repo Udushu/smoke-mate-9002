@@ -10,6 +10,8 @@
             "includePath": [
                 "C:/git/smoke-mate-9002/firmware/include",
                 "C:/git/smoke-mate-9002/firmware/src",
+                "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src",
+                "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                 "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/SPIFFS/src",
                 "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/ArduinoOTA/src",
                 "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/ESPmDNS/src",
@@ -226,7 +228,6 @@
                 "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/ESP32/src",
                 "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/Ethernet/src",
                 "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/FFat/src",
-                "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src",
                 "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdate/src",
                 "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdateServer/src",
                 "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/I2S/src",
@@ -241,7 +242,6 @@
                 "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/Ticker/src",
                 "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/USB/src",
                 "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
-                "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                 "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/WiFiProv/src",
                 ""
             ],
@@ -250,6 +250,8 @@
                 "path": [
                     "C:/git/smoke-mate-9002/firmware/include",
                     "C:/git/smoke-mate-9002/firmware/src",
+                    "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src",
+                    "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                     "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/SPIFFS/src",
                     "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/ArduinoOTA/src",
                     "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/ESPmDNS/src",
@@ -466,7 +468,6 @@
                     "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/ESP32/src",
                     "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/Ethernet/src",
                     "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/FFat/src",
-                    "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src",
                     "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdate/src",
                     "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdateServer/src",
                     "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/I2S/src",
@@ -481,7 +482,6 @@
                     "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/Ticker/src",
                     "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/USB/src",
                     "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
-                    "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                     "C:/Users/ososn/.platformio/packages/framework-arduinoespressif32/libraries/WiFiProv/src",
                     ""
                 ]
