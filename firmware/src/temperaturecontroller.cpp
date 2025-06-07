@@ -7,6 +7,7 @@ TemperatureController::TemperatureController(ControllerStatus &status, Configura
 {
     m_lastServiceTimeMSec = 0;
     m_pid.enable(); // Enable PID controller by default
+    m_lastOutput = 0;
 }
 
 void TemperatureController::service(int currentTempF, ulong currentTimeMSec)
@@ -65,9 +66,15 @@ void TemperatureController::service(int currentTempF, ulong currentTimeMSec)
 #endif
 }
 
+int TemperatureController::getLastOutput()
+{
+    return m_lastOutput;
+}
+
 void TemperatureController::serviceBangBangController(int currentTempF, ulong currentTimeMSec)
 {
     BangBangState controlOutput = m_bangBang.service(currentTempF, currentTimeMSec);
+    m_lastOutput = static_cast<int>(controlOutput); // Store the last output for reference
     switch (controlOutput)
     {
     case BANGBANG_STATE_IDLE:
@@ -98,6 +105,7 @@ void TemperatureController::servicePIDController(int currentTempF, ulong current
 
     // Call the PID service to calculate the control output
     int controlOutput = m_pid.service(currentTempF, m_config.temperatureTarget, currentTimeMSec);
+    m_lastOutput = controlOutput; // Store the last output for reference
 #ifdef DEBUG_TEMPERATURE_CONTROLLER
     DEBUG_PRINTLN("TC::PID - CONTROL: " + String(controlOutput));
 #endif

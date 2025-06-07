@@ -27,6 +27,7 @@ private:
     PID m_pid;                    // PID controller instance
     BangBang m_bangBang;          // Bang-Bang controller instance
     ulong m_lastServiceTimeMSec;  // Last service time in milliseconds
+    int m_lastOutput;             // Last output value from the controller
 
     void servicePIDController(int currentTempF, ulong currentTimeMSec);
     void serviceBangBangController(int currentTempF, ulong currentTimeMSec);
@@ -35,6 +36,7 @@ public:
     TemperatureController(ControllerStatus &status, Configuration &config, Blower &blower, Door &door);
     void setControlAlgorithm(ControlAlgorithm algo);
     void service(int currentTempF, ulong currentTimeMSec);
+    int getLastOutput();
 };
 
 #endif // TEMPERATURE_CONTROLLER_H
