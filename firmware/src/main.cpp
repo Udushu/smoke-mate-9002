@@ -414,6 +414,9 @@ void connectToWiFi()
 
   if (g_controllerStatus.isWiFiConnected)
   {
+    // Set Network name
+    g_controllerStatus.networkName = WiFi.SSID();
+
     // OTA setup
     ArduinoOTA.setHostname("smokemate9002");
 

@@ -146,6 +146,7 @@ void WebServer::handleApiStatus(AsyncWebServerRequest *request)
     doc["bars"] = s.bars;
     doc["ipAddress"] = s.ipAddress;
     doc["isWiFiConnected"] = s.isWiFiConnected;
+    doc["networkName"] = s.networkName;
 
     String json;
     serializeJson(doc, json);
@@ -180,6 +181,7 @@ void WebServer::handleApiConfigGet(AsyncWebServerRequest *request)
     doc["forcedDoorPosition"] = c.forcedDoorPosition;
     doc["isWiFiEnabled"] = c.isWiFiEnabled;
     doc["wifiSSID"] = String(c.wifiSSID);
+
     // Do not include wifiPassword for security, or include if needed:
     // doc["wifiPassword"] = String(c.wifiPassword);
 

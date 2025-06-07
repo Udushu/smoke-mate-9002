@@ -27,6 +27,7 @@ struct ControllerStatus
     int bars;
     String ipAddress;
     bool isWiFiConnected;
+    String networkName;
 };
 
 struct Configuration
