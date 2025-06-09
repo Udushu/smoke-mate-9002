@@ -147,6 +147,7 @@ void WebServer::handleApiStatus(AsyncWebServerRequest *request)
     doc["ipAddress"] = s.ipAddress;
     doc["isWiFiConnected"] = s.isWiFiConnected;
     doc["networkName"] = s.networkName;
+    doc["temperatureError"] = s.temperatureError; // Add temperature error if available
 
     String json;
     serializeJson(doc, json);
