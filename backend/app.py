@@ -3,6 +3,8 @@ from flask_cors import CORS
 import threading
 import requests
 import time
+import logging
+import datetime
 
 from database import Database
 
@@ -19,7 +21,7 @@ CORS(app)
 db = Database(DATABASE_PATH)
 
 def poll_status_api():
-    global status, last_is_running, run_start_time
+    global status, last_is_running, run_start_signature, run_stop_time
     
     while True:
         
@@ -32,6 +34,7 @@ def poll_status_api():
                 data = response.json()
                 # Copy data into the  status variable fied by field
                 # This assumes the structure of the data matches the status variable
+                status["timestamp"] = datetime.datetime.now().isoformat()
                 status["isConnected"] = True
                 status["isRunning"] = data.get('isRunning', False)
                 status["uuid"] = data.get('uuid', '')
@@ -46,29 +49,34 @@ def poll_status_api():
                 status["bars"] = data.get('bars', 0)
                 status["ipAddress"] = data.get('ipAddress', '')
                 status["isWiFiConnected"] = data.get('isWiFiConnected', False)
-
-                print("Data fetched:", data)
+                status["networkName"] = data.get('networkName', '')
+                status["temperatureError"] = data.get('temperatureError', 0)
                 
                 # Check if the controller has transitioned from NOT RUNNING to RUNNING
                 current_is_running = data.get('isRunning')
-                if last_is_running is not None and not last_is_running and current_is_running:
+                if (last_is_running is not None) and (not last_is_running) and current_is_running:
                     print("Controller transitioned from NOT RUNNING to RUNNING!")
-                    run_start_time = time.time()  # Record the start time of the run
+                    run_start_signature = {}
+                    run_start_signature["uptime"]= status["uptime"]
+                    run_start_signature["controllerStartMSec"] = status["controllerStartMSec"]
+                    print("Run start signature:", run_start_signature)
+                    
                 
                 last_is_running = current_is_running
+                print("Last isRunning state:", last_is_running, "at", run_start_signature)
                 
                 # Store the data in the database if the device is running
                 if data.get('isRunning'):
                     db.log_status(data)
             else:
                 # Handle the case where the API call fails
-                print("Failed to fetch data, status code:", response.status_code)
+                # print("Failed to fetch data, status code:", response.status_code)
                 # Reset the connection status
                 status["isConnected"] = False
                 
         except Exception as e:
             # Handle any exceptions that occur during the API call
-            print("Error fetching data:", e)
+            # print("Error fetching data:", e)
             # Update the connection status
             status["isConnected"] = False
         
@@ -81,14 +89,16 @@ def poll_status_config():
         try:
             response = requests.get(BASE_URL + API_CONFIG_ENDPOINT)
             if response.status_code == 200:
-                config_data = response.json()
+                config_data = response.json()                
                 config = config_data
-                print("Config fetched:", config_data)
+
                 # You can add db.log_config(config_data) if you want to log config as well
             else:
-                print("Failed to fetch config, status code:", response.status_code)
+                pass
+                # print("Failed to fetch config, status code:", response.status_code)
         except Exception as e:
-            print("Error fetching config:", e)
+            pass
+            # print("Error fetching config:", e)
         time.sleep(API_CONFIG_POLL_INTERVAL)  # Poll every API_CONFIG_POLL_INTERVAL seconds
         
 def cleanup_old_records():
@@ -107,11 +117,38 @@ def get_config():
 
 @app.route('/run-status-history', methods=['GET'])
 def get_session_status():
-    global run_start_time
-    if not run_start_time:
+    global run_start_signature, run_stop_time
+    
+    if run_start_signature is None:
         return jsonify({"error": "No running session detected"}), 400
-    records = db.get_status_since(run_start_time)
-    return jsonify(records)
+    else:
+        records = db.get_status_since(run_start_signature)
+        # print(records[-1])
+        return jsonify(records)
+
+@app.route('/start', methods=['POST'])
+def start_controller():
+    try:
+        # Forward the POST request to the device's /start endpoint
+        response = requests.post(BASE_URL + '/start')
+        if response.status_code == 200:
+            return jsonify({'success': True, 'message': 'Controller started', 'device_response': response.json()})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to start controller', 'status_code': response.status_code}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/stop', methods=['POST'])
+def stop_controller():
+    try:
+        # Forward the POST request to the device's /stop endpoint
+        response = requests.post(BASE_URL + '/stop')
+        if response.status_code == 200:
+            return jsonify({'success': True, 'message': 'Controller stopped', 'device_response': response.json()})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to stop controller', 'status_code': response.status_code}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Start polling in a background thread
 threading.Thread(target=poll_status_api, daemon=True).start()
@@ -122,9 +159,12 @@ if __name__ == '__main__':
     global status
     global config
     global last_is_running
-    global run_start_time
+    global run_start_signature
+    global run_stop_time
+    
     
     status =  {
+        'timestamp': None,
         'isConnected': False,
         'isRunning': False, 
         'uuid': '', 
@@ -138,7 +178,9 @@ if __name__ == '__main__':
         'RSSI': 0, 
         'bars': 0, 
         'ipAddress': '192.168.2.159', 
-        'isWiFiConnected': False
+        'isWiFiConnected': False,
+        'networkName': '',
+        'temperatureError':0
         }
     config = {        
         'temperatureTarget': 0, 
@@ -166,6 +208,11 @@ if __name__ == '__main__':
         'wifiSSID': 'BELL529'
     }
     last_is_running = None
-    run_start_time = None
+    run_start_signature = None
+    run_stop_time = None
     
+    # Disable Flask's default request logging
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
+
     app.run(host='0.0.0.0', port=5000, debug=True)

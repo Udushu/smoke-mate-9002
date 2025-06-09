@@ -1,8 +1,6 @@
 import sqlite3
 import os
-
-import sqlite3
-import os
+import datetime
 
 class Database:
     def __init__(self, db_path='database.db'):
@@ -29,7 +27,9 @@ class Database:
                     RSSI INTEGER,
                     bars INTEGER,
                     ipAddress TEXT,
-                    isWiFiConnected BOOLEAN
+                    isWiFiConnected BOOLEAN,
+                    networkName TEXT,
+                    temperatureError INTEGER
                 )
             ''')
             conn.commit()
@@ -38,13 +38,16 @@ class Database:
     def log_status(self, data):
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
+        # Use local time in ISO format for the timestamp
+        local_timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         c.execute('''
             INSERT INTO status_log (
-                isRunning, uuid, uptime, controllerStartMSec, temperatureSmoker,
+                timestamp, isRunning, uuid, uptime, controllerStartMSec, temperatureSmoker,
                 temperatureFood, temperatureTarget, fanPWM, doorPosition, RSSI,
-                bars, ipAddress, isWiFiConnected
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                bars, ipAddress, isWiFiConnected, networkName, temperatureError
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
         ''', (
+            local_timestamp,
             data.get('isRunning'),
             data.get('uuid'),
             data.get('uptime'),
@@ -57,7 +60,9 @@ class Database:
             data.get('RSSI'),
             data.get('bars'),
             data.get('ipAddress'),
-            data.get('isWiFiConnected')
+            data.get('isWiFiConnected'),
+            data.get('networkName'),
+            data.get('temperatureError') 
         ))
         conn.commit()
         conn.close()
@@ -74,16 +79,23 @@ class Database:
         conn.commit()
         conn.close()
         
-    def get_status_since(self, start_timestamp):
-        """Retrieve all status records since the given UNIX timestamp."""
+    def get_status_since(self, run_start_signature):
+        """
+        Retrieve all status records from the database that correspond to the current running session,
+        i.e., records with uptime >= run_start_signature['uptime'] and
+        controllerStartMSec >= run_start_signature['controllerStartMSec'].
+        """
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
         c.execute("""
             SELECT * FROM status_log
-            WHERE strftime('%s', timestamp) >= ?
+            WHERE uptime >= ? AND controllerStartMSec = ?
             ORDER BY timestamp ASC
-        """, (int(start_timestamp),))
+        """, (
+            run_start_signature.get("uptime", 0),
+            run_start_signature.get("controllerStartMSec", 0)
+        ))
         rows = c.fetchall()
         conn.close()
         return [dict(row) for row in rows]
