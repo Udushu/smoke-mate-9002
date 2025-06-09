@@ -1,0 +1,28 @@
+.instrument-button {
+  background: #222;
+  color: #ffc107;
+  border: 2px solid #ffc107;
+  border-radius: 8px;
+  font-family: 'DSEG7ClassicMini', monospace;
+  font-size: 1.2rem;
+  padding: 0.5rem 2rem;
+  margin: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  cursor: pointer;
+  outline: none;
+}
+
+.instrument-button:hover,
+.instrument-button:focus {
+  background: #ffc107;
+  color: #222;
+  border-color: #fffbe6;
+}
+
+.instrument-button-active {
+  background: #ffc107;
+  color: #222;
+  border-color: #fffbe6;
+  box-shadow: 0 0 0 3px #fffbe6;
+}

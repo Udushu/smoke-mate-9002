@@ -4,8 +4,10 @@ import { DeviceConfig, defaultDeviceConfig } from "./types/deviceConfig";
 import { StatusBar } from "./components/StatusBar";
 import TemperatureBar from "./components/TemperatureBar";
 import TemperatureHistoryChart from "./components/TemperatureHistoryChart";
+import Button from "./components/Button";
 
-const URL_BACKEND = "http://localhost:5000";
+const BACKEND_URL = "http://localhost:5000";
+const BACKEND_POLLING_INTERVAL = 250; // 0.25 second
 
 const App: React.FC = () => {
   const [status, setStatus] = useState<DeviceStatus>(defaultDeviceStatus);
@@ -17,7 +19,7 @@ const App: React.FC = () => {
     // Fetch the device status every second
     const interval = setInterval(() => {
       // Fetch the device status
-      fetch(URL_BACKEND + "/status")
+      fetch(BACKEND_URL + "/status")
         .then((response) => {
           // Check if the response is OK
           if (!response.ok) {
@@ -54,7 +56,7 @@ const App: React.FC = () => {
           console.log(deviceStatus);
         })
         .catch((error) => console.log("Error:", error));
-    }, 1000); // Fetch every 1 second
+    }, BACKEND_POLLING_INTERVAL); // Fetch every 1 second
 
     // Cleanup function to clear the interval when the component is unmounted
     return () => clearInterval(interval);
@@ -65,7 +67,7 @@ const App: React.FC = () => {
     // Fetch the device status every second
     const interval = setInterval(() => {
       // Fetch the device status
-      fetch(URL_BACKEND + "/config")
+      fetch(BACKEND_URL + "/config")
         .then((response) => {
           // Check if the response is OK
           if (!response.ok) {
@@ -106,7 +108,7 @@ const App: React.FC = () => {
           setConfig(deviceDonfig);
         })
         .catch((error) => console.log("Error:", error));
-    }, 1000); // Fetch every 1 second
+    }, BACKEND_POLLING_INTERVAL); // Fetch every 1 second
 
     // Cleanup function to clear the interval when the component is unmounted
     return () => clearInterval(interval);
@@ -117,7 +119,7 @@ const App: React.FC = () => {
     // Fetch the device status every second
     const interval = setInterval(() => {
       // Fetch the device status
-      fetch(URL_BACKEND + "/run-status-history")
+      fetch(BACKEND_URL + "/run-status-history")
         .then((response) => {
           // Check if the response is OK
           if (!response.ok) {
@@ -151,7 +153,7 @@ const App: React.FC = () => {
           setHistory(runStatusHistory);
         })
         .catch((error) => console.log("Error:", error));
-    }, 1000); // Fetch every 1 second
+    }, BACKEND_POLLING_INTERVAL); // Fetch every 1 second
 
     // Cleanup function to clear the interval when the component is unmounted
     return () => clearInterval(interval);
@@ -159,7 +161,7 @@ const App: React.FC = () => {
 
   const handleStart = async () => {
     try {
-      await fetch(URL_BACKEND + "/start", { method: "POST" });
+      await fetch(BACKEND_URL + "/start", { method: "POST" });
     } catch (error) {
       console.error("Failed to start controller:", error);
     }
@@ -167,7 +169,7 @@ const App: React.FC = () => {
 
   const handleStop = async () => {
     try {
-      await fetch(URL_BACKEND + "/stop", { method: "POST" });
+      await fetch(BACKEND_URL + "/stop", { method: "POST" });
     } catch (error) {
       console.error("Failed to stop controller:", error);
     }
@@ -189,15 +191,14 @@ const App: React.FC = () => {
         {" "}
         <p />
       </div>
-      {status.isRunning ? (
-        <button className="btn btn-danger" onClick={handleStop}>
-          Stop Controller
-        </button>
-      ) : (
-        <button className="btn btn-success" onClick={handleStart}>
-          Start Controller
-        </button>
-      )}
+      <div className="row justify-content-center">
+        <Button
+          active={status.isRunning}
+          onClick={status.isRunning ? handleStop : handleStart}
+        >
+          {status.isRunning ? "Stop Controller" : "Start Controller"}
+        </Button>
+      </div>
     </div>
   );
 };
