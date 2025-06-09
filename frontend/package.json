@@ -8,13 +8,22 @@
     "serve": "vite preview"
   },
   "dependencies": {
+    "bootstrap": "^5.3.6",
+    "bootstrap-icons": "^1.13.1",
+    "bootswatch": "^5.3.6",
+    "chart.js": "^4.4.9",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "dseg": "^0.46.0",
     "react": "^18.0.0",
+    "react-7-segment-display": "^1.1.5",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.0.0"
   },
   "devDependencies": {
-    "typescript": "^4.0.0",
-    "vite": "^2.0.0",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0"
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.5.1",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
   }
 }
