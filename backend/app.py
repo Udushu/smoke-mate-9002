@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template_string
 from flask_cors import CORS
 import threading
 import requests
@@ -149,6 +149,27 @@ def stop_controller():
             return jsonify({'success': False, 'error': 'Failed to stop controller', 'status_code': response.status_code}), 500
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+    
+@app.route('/')
+def index():
+    # Simple HTML template showing the latest status
+    html = """
+    <html>
+    <head><title>Latest Status</title></head>
+    <body>
+        <h1>Latest Status</h1>
+        <table border="1" cellpadding="5">
+            {% for key, value in status.items() %}
+            <tr>
+                <th>{{ key }}</th>
+                <td>{{ value }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </body>
+    </html>
+    """
+    return render_template_string(html, status=status)
 
 # Start polling in a background thread
 threading.Thread(target=poll_status_api, daemon=True).start()
