@@ -147,6 +147,7 @@ void loop()
   {
     // If the controller is not running, we still want to update the temperature
     g_temperatureController.service(g_thermometerSmoker.getTemperatureF(), g_loopCurrentTimeMSec);
+    g_controllerStatus.temperatureError = g_temperatureController.getLastOutput(); // Get the last output from the temperature controller
   }
 
   if (!g_controllerStatus.isRunning && g_configuration.isForcedDoorPosition)

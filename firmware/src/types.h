@@ -28,6 +28,7 @@ struct ControllerStatus
     String ipAddress;
     bool isWiFiConnected;
     String networkName;
+    int temperatureError;
 };
 
 struct Configuration
