@@ -6,8 +6,10 @@
 #include <esp_system.h>
 #include <vector>
 #include <WiFi.h>
-
+#include "debug.h"
 #include <deque>
+
+// #define GUI_DEBUG
 
 // WIFI CONSTANTS =================================================================================
 #define WIFI_SCAN_TIMEOUT_MSEC 5000 // Timeout for WiFi scan in milliseconds
@@ -90,6 +92,11 @@
 #define GUI_SETTINGS_PID_K_STEP 0.1f
 #define GUI_SETTINGS_PID_K_DECIMAL_PLACES 2 // Decimal places for PID settings
 
+// Temperature profile duration constants
+#define GUI_SETTINGS_TEMP_PROFILE_DURATION_MIN 10 * 60 * 1000      // 10 minutes in milliseconds
+#define GUI_SETTINGS_TEMP_PROFILE_DURATION_MAX 12 * 60 * 60 * 1000 // 12 hours in milliseconds
+#define GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP 1 * 60 * 1000      // 1 minute in milliseconds
+
 enum GUI_STATE_ACTIVE_HEADER
 {
     GUI_STATE_HEADER_STATUS,
@@ -99,6 +106,10 @@ enum GUI_STATE_ACTIVE_HEADER
     GUI_STATE_HEADER_SETTINGS_EDIT_VALUE,
     GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_SSID,
     GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_PASSWORD,
+    GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE,
+    GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP,
+    GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP_EDIT,
+
 };
 
 struct TemperatureHistoryEntry
@@ -121,6 +132,20 @@ struct GuiStateStatus
     int targetTempF;
     uint8_t fanPercent;
     uint8_t doorPercent;
+};
+
+struct GuiStateTempProfile
+{
+    int cursor;       // Which item is selected (enable, steps, or a step)
+    int editingIndex; // -1 if not editing, otherwise index of step being edited
+    int scroll;       // For scrolling through steps if needed
+};
+
+struct GuiStateTempProfileEdit
+{
+    int stepIndex; // Which step is being edited
+    int field;     // 0=type, 1=duration, 2=t1, 3=t2 (if ramp)
+    bool editing;  // true if editing a field
 };
 
 struct GuiStateSettings
@@ -155,6 +180,9 @@ struct GuiState
     std::deque<TemperatureHistoryEntry> history;
     bool isControllerRunning;
     ulong controllerStartTimeMSec;
+
+    GuiStateTempProfile tempProfile;
+    GuiStateTempProfileEdit tempProfileEdit;
 };
 
 // --- Settings metadata and helpers ---
@@ -165,6 +193,14 @@ struct SettingItem
     String (*getValue)(const Configuration &); // Function to get the setting value as a string
     SettingEditFunc incFunc;                   // Function to increment the setting value
     SettingEditFunc decFunc;                   // Function to decrement the setting value
+};
+
+struct TempProfileItem
+{
+    const char *label;
+    String (*getValue)(const TempProfileStep &); // Function to get the temperature profile step value as a string
+    void (*incFunc)(TempProfileStep &);          // Function to increment the temperature profile step value
+    void (*decFunc)(TempProfileStep &);          // Function to decrement the temperature profile step value
 };
 
 class SmokeMateGUI
@@ -206,8 +242,12 @@ private:
     void drawHeader(const GuiStateHeader &state);
     void drawFooter(const GuiState &state, ulong controllerRunTimeMSec);
     void drawStausPanel(const GuiStateStatus &state);
+
+    void manageTempChartState(ulong currentTimeMSec);
     void drawChartPanel(const std::deque<TemperatureHistoryEntry> &history);
+
     void drawSettingsPanel(const GuiState &state);
+
     void drawWiFiSelectPanel();
     void drawWiFiPasswordPanel();
 
@@ -221,6 +261,10 @@ private:
     void startWiFiScan(); // Start WiFi scan to populate available networks
 
     void drawWiFiIcon(int x, int y, int bars, bool connected);
+
+    void drawTempProfilePanel(const GuiStateTempProfile &tempProfile);
+    void drawTempProfileStepLine(int n, TempProfileStep &step, bool selected);
+    void drawTempProfileStepPanel(const GuiStateTempProfile &tempProfile, GuiStateTempProfileEdit &tempProfileEdit);
 };
 
 #endif // GUI_H

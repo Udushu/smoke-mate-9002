@@ -282,6 +282,16 @@ void loadDefaultConfiguration(Configuration *ptr_configuration)
   ptr_configuration->temperatureTarget = DEFAULT_TEMPERATURE_TARGET;
   ptr_configuration->temperatureIntervalMSec = DEFAULT_TEMPERATURE_INTERVAL_MSEC;
 
+  ptr_configuration->isTemperatureProfilingEnabled = false; // Start with temperature profiling disabled
+  ptr_configuration->temperatureProfileStepsCount = 0;      // Start with no temperature profile steps
+  for (int i = 0; i < MAX_PROFILE_STEPS; i++)
+  {
+    ptr_configuration->temperatureProfile[i].timeMSec = 1000;
+    ptr_configuration->temperatureProfile[i].type = TEMP_PROFILE_TYPE_DWELL;                // Default to dwell type
+    ptr_configuration->temperatureProfile[i].temperatureStarF = DEFAULT_TEMPERATURE_TARGET; // Default to target temperature
+    ptr_configuration->temperatureProfile[i].temperatureEndF = DEFAULT_TEMPERATURE_TARGET;  // Default to target temperature
+  }
+
   ptr_configuration->isPIDEnabled = true;
   ptr_configuration->kP = DEFAULT_PID_KP;
   ptr_configuration->kI = DEFAULT_PID_KI;

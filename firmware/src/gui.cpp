@@ -29,6 +29,26 @@ void decInterval(Configuration &c)
         c.temperatureIntervalMSec -= GUI_SETTINGS_INTERVAL_STEP;
 }
 
+// TEMPERATURE PROFILING ENABLE SWITCH ============================================================
+static String getIsTemperatureProfilingEnabled(const Configuration &c) { return c.isTemperatureProfilingEnabled ? "Yes" : "No"; }
+void incIsTemperatureProfilingEnabled(Configuration &c) { c.isTemperatureProfilingEnabled = !c.isTemperatureProfilingEnabled; }
+void decIsTemperatureProfilingEnabled(Configuration &c) { c.isTemperatureProfilingEnabled = !c.isTemperatureProfilingEnabled; }
+// TEMPERATURE PROFILE STEPS COUNT ================================================================
+static String getTemperatureProfileStepsCount(const Configuration &c)
+{
+    return String(c.temperatureProfileStepsCount) + " steps";
+}
+void incTemperatureProfileStepsCount(Configuration &c)
+{
+    if (c.temperatureProfileStepsCount < MAX_PROFILE_STEPS)
+        c.temperatureProfileStepsCount++;
+}
+void decTemperatureProfileStepsCount(Configuration &c)
+{
+    if (c.temperatureProfileStepsCount > 0)
+        c.temperatureProfileStepsCount--;
+}
+
 // PID ENABLE SWITCH ==============================================================================
 static String getPIDEnabled(const Configuration &c) { return c.isPIDEnabled ? "Yes" : "No"; }
 void incPIDEnabled(Configuration &c) { c.isPIDEnabled = !c.isPIDEnabled; }
@@ -237,6 +257,10 @@ const int wifiCharSetLen = strlen(WIFI_CHAR_SET);
 static const SettingItem SETTINGS_LIST[] = {
     {"Target Temp", getTargetTemp, incTargetTemp, decTargetTemp},
     {"Contol Interval", getInterval, incInterval, decInterval},
+    {"Temp Profiling", getIsTemperatureProfilingEnabled, incIsTemperatureProfilingEnabled, decIsTemperatureProfilingEnabled},
+    {"Profile Steps", getTemperatureProfileStepsCount, incTemperatureProfileStepsCount, decTemperatureProfileStepsCount},
+
+    {"Edit Temp Profiles", nullptr, nullptr, nullptr},
 
     {"PID Enabled", getPIDEnabled, incPIDEnabled, decPIDEnabled},
     {"PID kP", getKP, incKP, decKP},
@@ -269,11 +293,91 @@ static const SettingItem SETTINGS_LIST[] = {
     {"Reboot", nullptr, nullptr, nullptr},
 
     {"Exit", nullptr, nullptr, nullptr}};
+
 static constexpr int SETTINGS_COUNT = sizeof(SETTINGS_LIST) / sizeof(SETTINGS_LIST[0]);
+static constexpr int SETTINGS_TEMP_PROFILE_START_INDEX = 4;             // Index of the first temperature profile setting
 static constexpr int SETTINGS_WIFI_SSID_INDEX = SETTINGS_COUNT - 4;     // Index of WiFi SSID setting
 static constexpr int SETTINGS_WIFI_PASSWORD_INDEX = SETTINGS_COUNT - 3; // Index of WiFi Password setting
 static constexpr int SETTINGS_REBOOT_INDEX = SETTINGS_COUNT - 2;        // Index of WiFi Password setting
 static constexpr int SETTINGS_EXIT_INDEX = SETTINGS_COUNT - 1;          // Index of the last editable setting
+
+// ========================================== TEMP PROFILE SETTINGS LIST ==============================
+static String getTempProfileStepType(const TempProfileStep &step)
+{
+    return step.type == TEMP_PROFILE_TYPE_RAMP ? "Ramp" : "Dwell";
+}
+void incTempProfileStepType(TempProfileStep &step)
+{
+    step.type = (step.type == TEMP_PROFILE_TYPE_RAMP) ? TEMP_PROFILE_TYPE_DWELL : TEMP_PROFILE_TYPE_RAMP;
+}
+void decTempProfileStepType(TempProfileStep &step)
+{
+    step.type = (step.type == TEMP_PROFILE_TYPE_RAMP) ? TEMP_PROFILE_TYPE_DWELL : TEMP_PROFILE_TYPE_RAMP;
+}
+
+static String getTempProfileDuration(const TempProfileStep &step)
+{
+    return String(step.timeMSec / (60 * 1000)) + " min";
+}
+void incTempProfileDuration(TempProfileStep &step)
+{
+    if (step.timeMSec + GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP <= GUI_SETTINGS_TEMP_PROFILE_DURATION_MAX)
+        step.timeMSec += GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP;
+    else
+        step.timeMSec = GUI_SETTINGS_TEMP_PROFILE_DURATION_MAX;
+}
+void decTempProfileDuration(TempProfileStep &step)
+{
+    if (step.timeMSec - GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP >= GUI_SETTINGS_TEMP_PROFILE_DURATION_MIN)
+        step.timeMSec -= GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP;
+    else
+        step.timeMSec = GUI_SETTINGS_TEMP_PROFILE_DURATION_MIN;
+}
+static String getTempProfileT1(const TempProfileStep &step)
+{
+    return String(step.temperatureStarF) + " F";
+}
+void incTempProfileT1(TempProfileStep &step)
+{
+    if (step.temperatureStarF + GUI_SETTINGS_TEMP_STEP <= GUI_SETTINGS_TEMP_MAX)
+        step.temperatureStarF += GUI_SETTINGS_TEMP_STEP;
+    else
+        step.temperatureStarF = GUI_SETTINGS_TEMP_MAX;
+}
+void decTempProfileT1(TempProfileStep &step)
+{
+    if (step.temperatureStarF - GUI_SETTINGS_TEMP_STEP >= GUI_SETTINGS_TEMP_MIN)
+        step.temperatureStarF -= GUI_SETTINGS_TEMP_STEP;
+    else
+        step.temperatureStarF = GUI_SETTINGS_TEMP_MIN;
+}
+static String getTempProfileT2(const TempProfileStep &step)
+{
+    return String(step.temperatureEndF) + " F";
+}
+void incTempProfileT2(TempProfileStep &step)
+{
+    if (step.temperatureEndF + GUI_SETTINGS_TEMP_STEP <= GUI_SETTINGS_TEMP_MAX)
+        step.temperatureEndF += GUI_SETTINGS_TEMP_STEP;
+    else
+        step.temperatureEndF = GUI_SETTINGS_TEMP_MAX;
+}
+void decTempProfileT2(TempProfileStep &step)
+{
+    if (step.temperatureEndF - GUI_SETTINGS_TEMP_STEP >= GUI_SETTINGS_TEMP_MIN)
+        step.temperatureEndF -= GUI_SETTINGS_TEMP_STEP;
+    else
+        step.temperatureEndF = GUI_SETTINGS_TEMP_MIN;
+}
+
+static const TempProfileItem TEMPPROFILE_SETTINGS_LIST[] = {
+    {"Type", getTempProfileStepType, incTempProfileStepType, decTempProfileStepType},
+    {"Duration", getTempProfileDuration, incTempProfileDuration, decTempProfileDuration},
+    {"Start Temp", getTempProfileT1, incTempProfileT1, decTempProfileT1},
+    {"End Temp", getTempProfileT2, incTempProfileT2, decTempProfileT2}
+
+};
+static constexpr int TEMPPROFILE_SETTINGS_COUNT = sizeof(TEMPPROFILE_SETTINGS_LIST) / sizeof(TEMPPROFILE_SETTINGS_LIST[0]);
 
 // ========================================== INTERNAL HELPER METHODS ====================================
 bool operator==(const GuiStateHeader &a, const GuiStateHeader &b)
@@ -315,6 +419,60 @@ bool operator!=(const GuiStateSettings &a, const GuiStateSettings &b)
     return !(a == b);
 }
 
+bool operator==(const GuiStateTempProfile &a, const GuiStateTempProfile &b)
+{
+    return a.cursor == b.cursor &&
+           a.scroll == b.scroll &&
+           a.editingIndex == b.editingIndex;
+}
+
+bool operator!=(const GuiStateTempProfile &a, const GuiStateTempProfile &b)
+{
+    return !(a == b);
+}
+
+bool operator==(const GuiStateTempProfileEdit &a, const GuiStateTempProfileEdit &b)
+{
+    return a.stepIndex == b.stepIndex &&
+           a.field == b.field &&
+           a.editing == b.editing;
+}
+
+bool operator!=(const GuiStateTempProfileEdit &a, const GuiStateTempProfileEdit &b)
+{
+    return !(a == b);
+}
+
+// ========================================== DEBUG METHODS ==========================================
+inline const char *guiStateHeaderToString(GUI_STATE_ACTIVE_HEADER state)
+{
+    switch (state)
+    {
+    case GUI_STATE_HEADER_STATUS:
+        return "STATUS";
+    case GUI_STATE_HEADER_CHART:
+        return "CHART";
+    case GUI_STATE_HEADER_SETTINGS:
+        return "SETTINGS";
+    case GUI_STATE_HEADER_SETTINGS_EDIT:
+        return "SETTINGS_EDIT";
+    case GUI_STATE_HEADER_SETTINGS_EDIT_VALUE:
+        return "SETTINGS_EDIT_VALUE";
+    case GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_SSID:
+        return "SETTINGS_EDIT_WIFI_SSID";
+    case GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_PASSWORD:
+        return "SETTINGS_EDIT_WIFI_PASSWORD";
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE:
+        return "TEMP_PROFILE";
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP:
+        return "TEMP_PROFILE_STEP";
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP_EDIT:
+        return "TEMP_PROFILE_STEP_EDIT";
+    default:
+        return "UNKNOWN";
+    }
+}
+
 // ========================================== PUBLIC METHODS ==========================================
 
 SmokeMateGUI::SmokeMateGUI(Adafruit_ST7789 &displayRef, Configuration &config) : m_tft(displayRef),
@@ -350,40 +508,7 @@ void SmokeMateGUI::begin()
 void SmokeMateGUI::service(ulong currentTimeMSec)
 {
 
-    // Check if a transition from idle temperature controller to running has occurred
-    if (m_guiState.isControllerRunning && !m_isControllerRunning)
-    {
-        // Reset the history when the controller starts
-        m_guiState.history.clear();
-        // Reset the last chart update time
-        m_chartSampleIntervalMSec = GUI_CHART_UPDATE_INTERVAL_MSEC;
-    }
-
-    if (m_guiState.isControllerRunning &&
-        (currentTimeMSec - m_lastChartUpdateTimeMSec >= m_chartSampleIntervalMSec))
-    {
-        m_lastChartUpdateTimeMSec = currentTimeMSec;
-        // Push the current state to the history
-        m_guiState.history.push_back({currentTimeMSec - m_guiState.controllerStartTimeMSec,
-                                      m_guiState.status.smokerTempF,
-                                      m_guiState.status.foodTempF,
-                                      m_guiState.status.targetTempF});
-        // Deal with the temperature history queue, check for overflow
-        if (m_guiState.history.size() > GUI_MAX_HISTORY_ENTRIES)
-        {
-            // Remove the oldest entry if the queue is full
-            // state.history.pop_front();
-
-            // Remove every second data point (keep even indices)
-            for (size_t i = 1; i < m_guiState.history.size();)
-            {
-                m_guiState.history.erase(m_guiState.history.begin() + i);
-                ++i;
-            }
-            m_chartSampleIntervalMSec *= 2; // Double the interval
-        }
-        m_isChartUpdateNeeded = true; // Set the flag to indicate that chart update is needed
-    }
+    manageTempChartState(currentTimeMSec);
 
     // Update the controller running state
     m_isControllerRunning = m_guiState.isControllerRunning;
@@ -462,11 +587,83 @@ void SmokeMateGUI::service(ulong currentTimeMSec)
             drawWiFiPasswordPanel();
         }
         break;
+
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE:
+        // Draw temperature profile settings panel
+        m_isChartUpdateNeeded = true;
+        if ((m_guiState.tempProfile != m_prevGuiState.tempProfile) || m_isForcedGUIUpdate)
+        {
+            m_isForcedGUIUpdate = false; // Reset the forced update flag
+            drawTempProfilePanel(m_guiState.tempProfile);
+        }
+        break;
+
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP:
+        // Draw temperature profile step edit panel
+        m_isChartUpdateNeeded = true;
+        if ((m_guiState.tempProfileEdit != m_prevGuiState.tempProfileEdit) || m_isForcedGUIUpdate)
+        {
+            m_isForcedGUIUpdate = false; // Reset the forced update flag
+            drawTempProfileStepPanel(m_guiState.tempProfile, m_guiState.tempProfileEdit);
+        }
+        break;
+
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP_EDIT:
+        // Draw temperature profile step edit panel
+        m_isChartUpdateNeeded = true;
+        if ((m_guiState.tempProfileEdit != m_prevGuiState.tempProfileEdit) || m_isForcedGUIUpdate)
+        {
+            m_isForcedGUIUpdate = false; // Reset the forced update flag
+            drawTempProfileStepPanel(m_guiState.tempProfile, m_guiState.tempProfileEdit);
+        }
+        break;
     }
     // drawChart(state.smokerHistory, state.foodHistory);
 
     m_isCommandQueued = false;   // Reset the command queued flag after processing
     m_prevGuiState = m_guiState; // Update the previous state to the current state
+
+#ifdef GUI_DEBUG
+    DEBUG_PRINTLN(guiStateHeaderToString(m_guiState.header.state));
+#endif
+}
+
+void SmokeMateGUI::manageTempChartState(ulong currentTimeMSec)
+{
+    // Check if a transition from idle temperature controller to running has occurred
+    if (m_guiState.isControllerRunning && !m_isControllerRunning)
+    {
+        // Reset the history when the controller starts
+        m_guiState.history.clear();
+        // Reset the last chart update time
+        m_chartSampleIntervalMSec = GUI_CHART_UPDATE_INTERVAL_MSEC;
+    }
+
+    if (m_guiState.isControllerRunning &&
+        (currentTimeMSec - m_lastChartUpdateTimeMSec >= m_chartSampleIntervalMSec))
+    {
+        m_lastChartUpdateTimeMSec = currentTimeMSec;
+        // Push the current state to the history
+        m_guiState.history.push_back({currentTimeMSec - m_guiState.controllerStartTimeMSec,
+                                      m_guiState.status.smokerTempF,
+                                      m_guiState.status.foodTempF,
+                                      m_guiState.status.targetTempF});
+        // Deal with the temperature history queue, check for overflow
+        if (m_guiState.history.size() > GUI_MAX_HISTORY_ENTRIES)
+        {
+            // Remove the oldest entry if the queue is full
+            // state.history.pop_front();
+
+            // Remove every second data point (keep even indices)
+            for (size_t i = 1; i < m_guiState.history.size();)
+            {
+                m_guiState.history.erase(m_guiState.history.begin() + i);
+                ++i;
+            }
+            m_chartSampleIntervalMSec *= 2; // Double the interval
+        }
+        m_isChartUpdateNeeded = true; // Set the flag to indicate that chart update is needed
+    }
 }
 
 void SmokeMateGUI::updateState(const ControllerStatus &controllerStatus, const Configuration &config)
@@ -497,8 +694,10 @@ GuiState SmokeMateGUI::getState()
 
 void SmokeMateGUI::commandMoveNext()
 {
-    GuiStateHeader &header = m_guiState.header;       // Reference to the current header state
-    GuiStateSettings &settings = m_guiState.settings; // Reference to the settings state
+    GuiStateHeader &header = m_guiState.header;                   // Reference to the current header state
+    GuiStateSettings &settings = m_guiState.settings;             // Reference to the settings state
+    int stepIdx = m_guiState.tempProfile.editingIndex;            // Index for temperature profile steps
+    TempProfileStep &step = m_config.temperatureProfile[stepIdx]; // Reference to the current temperature profile step
 
     if (m_isCommandQueued)
     {
@@ -570,6 +769,40 @@ void SmokeMateGUI::commandMoveNext()
         }
         break;
 
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE:
+        // Scroll through temperature profile settings
+        if (m_guiState.tempProfile.cursor < m_config.temperatureProfileStepsCount - 1)
+        {
+            m_guiState.tempProfile.cursor++;
+            if (m_guiState.tempProfile.cursor >= m_guiState.tempProfile.scroll + GUI_SETTINGS_BLOCK_COUNT)
+                m_guiState.tempProfile.scroll++;
+        }
+        else
+        {
+            // Roll to top
+            m_guiState.tempProfile.cursor = 0;
+            m_guiState.tempProfile.scroll = 0;
+        }
+
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP:
+
+        // Move to next field
+        if (m_guiState.tempProfileEdit.stepIndex < TEMPPROFILE_SETTINGS_COUNT - 1)
+            m_guiState.tempProfileEdit.stepIndex++;
+        else
+            m_guiState.tempProfileEdit.stepIndex = 0;
+
+        // Keep cursor in sync for highlight
+        m_guiState.tempProfile.cursor = m_guiState.tempProfileEdit.stepIndex;
+        break;
+
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP_EDIT:
+
+        TEMPPROFILE_SETTINGS_LIST[m_guiState.tempProfileEdit.field].incFunc(
+            m_config.temperatureProfile[m_guiState.tempProfile.editingIndex]);
+        m_isCommandQueued = true;
+        break;
+
     default:
         break;
     }
@@ -579,8 +812,10 @@ void SmokeMateGUI::commandMoveNext()
 
 void SmokeMateGUI::commandMovePrevious()
 {
-    GuiStateHeader &header = m_guiState.header;       // Reference to the current header state
-    GuiStateSettings &settings = m_guiState.settings; // Reference to the settings state
+    GuiStateHeader &header = m_guiState.header;                   // Reference to the current header state
+    GuiStateSettings &settings = m_guiState.settings;             // Reference to the settings state
+    int stepIdx = m_guiState.tempProfile.editingIndex;            // Index for temperature profile steps
+    TempProfileStep &step = m_config.temperatureProfile[stepIdx]; // Reference to the current temperature profile step
 
     if (m_isCommandQueued)
     {
@@ -651,7 +886,43 @@ void SmokeMateGUI::commandMovePrevious()
             settings.wifiPasswordCharIdx = strlen(WIFI_CHAR_SET) - 1; // Wrap around to the last character
         }
         break;
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE:
+        // Scroll through temperature profile settings
+        if (m_guiState.tempProfile.cursor > 0)
+        {
+            m_guiState.tempProfile.cursor--;
+            if (m_guiState.tempProfile.cursor < m_guiState.tempProfile.scroll)
+                m_guiState.tempProfile.scroll--;
+        }
+        else
+        {
+            // Roll to bottom
+            m_guiState.tempProfile.cursor = m_config.temperatureProfileStepsCount - 1;
+            m_guiState.tempProfile.scroll = m_config.temperatureProfileStepsCount > GUI_SETTINGS_BLOCK_COUNT
+                                                ? m_config.temperatureProfileStepsCount - GUI_SETTINGS_BLOCK_COUNT
+                                                : 0;
+        }
+        break;
 
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP:
+        // Move to previous field
+        if (m_guiState.tempProfileEdit.stepIndex > 0)
+            m_guiState.tempProfileEdit.stepIndex--;
+        else
+            m_guiState.tempProfileEdit.stepIndex = TEMPPROFILE_SETTINGS_COUNT - 1;
+
+        // Keep cursor in sync for highlight
+        m_guiState.tempProfile.cursor = m_guiState.tempProfileEdit.stepIndex;
+        break;
+
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP_EDIT:
+
+        TEMPPROFILE_SETTINGS_LIST[m_guiState.tempProfileEdit.field].decFunc(
+            m_config.temperatureProfile[m_guiState.tempProfile.editingIndex]);
+        m_isCommandQueued = true;
+        break;
+
+    // Handle other states
     default:
         break;
     }
@@ -717,6 +988,13 @@ void SmokeMateGUI::commandSelect()
             // Clear the WiFi password buffer
             memset(m_wifiPasswordBuffer, 0, sizeof(m_wifiPasswordBuffer)); // Clear the password buffer
         }
+        else if (settings.cursor == SETTINGS_TEMP_PROFILE_START_INDEX)
+        {
+            header.state = GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE; // Move to temperature profiling state
+            m_guiState.tempProfile.cursor = 0;                     // Reset the cursor for temperature profiling
+            m_guiState.tempProfile.scroll = 0;                     // Reset the scroll for temperature profiling
+            m_guiState.tempProfile.editingIndex = -1;              // Reset the editing index for temperature profiling
+        }
         else
         {
             header.state = GUI_STATE_HEADER_SETTINGS_EDIT_VALUE; // Move to settings edit value state
@@ -751,6 +1029,28 @@ void SmokeMateGUI::commandSelect()
             m_wifiPasswordBuffer[len + 1] = '\0';
         }
         m_isForcedGUIUpdate = true;
+        break;
+
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE:
+        // Proceed to temperature profile step state
+        header.state = GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP;          // Move to temperature profile step state
+        m_guiState.tempProfile.editingIndex = m_guiState.tempProfile.cursor; // Set the editing index to the selected profile step
+        m_guiState.tempProfileEdit.stepIndex = 0;                            // Start editing the first field of the selected profile step
+        m_guiState.tempProfileEdit.editing = false;                          // Set editing to false initially
+        break;
+
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP:
+        header.state = GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP_EDIT;         // Move to temperature profile step edit state
+        m_guiState.tempProfileEdit.editing = true;                               // Set editing to true
+        m_guiState.tempProfileEdit.field = m_guiState.tempProfileEdit.stepIndex; // Set field to current stepIndex
+        m_isCommandQueued = true;
+        break;
+
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP_EDIT:
+        header.state = GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP;
+        m_isForcedGUIUpdate = true;                 // Force GUI update
+        m_guiState.tempProfileEdit.editing = false; // Set editing to false
+        m_isNVRAMSaveRequired = true;               // Set the flag to indicate that NVRAM save is required
         break;
 
     default:
@@ -804,6 +1104,24 @@ void SmokeMateGUI::commandConfirm()
         m_isForcedGUIUpdate = true;
         break;
 
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE:
+        // Leave temperature profile settings
+        header.state = GUI_STATE_HEADER_SETTINGS_EDIT; // Move back to settings editing state
+        m_guiState.tempProfile.editingIndex = -1;      // Reset the editing index for temperature profile
+        m_isForcedGUIUpdate = true;                    // Force GUI update
+        break;
+
+    case GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP:
+        header.state = GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE; // Move back to temperature profile settings state
+        m_guiState.tempProfileEdit.editing = false;
+        m_isNVRAMSaveRequired = true;
+        m_isForcedGUIUpdate = true;
+        break;
+
+    default:
+        // If we reach here, it means we are in an unexpected state
+        break;
+
         m_isCommandQueued = true; // Set the command as queued
     }
 }
@@ -838,7 +1156,10 @@ void SmokeMateGUI::drawHeader(const GuiStateHeader &header)
     if (header.state == GUI_STATE_HEADER_SETTINGS_EDIT ||
         header.state == GUI_STATE_HEADER_SETTINGS_EDIT_VALUE ||
         header.state == GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_SSID ||
-        header.state == GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_PASSWORD)
+        header.state == GUI_STATE_HEADER_SETTINGS_EDIT_WIFI_PASSWORD ||
+        header.state == GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE ||
+        header.state == GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP ||
+        header.state == GUI_STATE_HEADER_SETTINGS_TEMP_PROFILE_STEP_EDIT)
     {
         settingsColor = COLOR_HEADER_SELECTED; // Highlight the settings block when editing
     }
@@ -1272,5 +1593,91 @@ void SmokeMateGUI::drawWiFiIcon(int x, int y, int bars, bool connected)
             m_tft.fillRect(barX, barY, barWidth, barHeight, color);
         else
             m_tft.drawRect(barX, barY, barWidth, barHeight, color);
+    }
+}
+
+void SmokeMateGUI::drawTempProfilePanel(const GuiStateTempProfile &tempProfile)
+{
+    // Clear the temperature profile panel area
+    m_tft.fillRect(0, GUI_SETTINGS_PANEL_Y_OFFSET, SCREEN_WIDTH, GUI_SETTINGS_PANEL_HEIGHT, COLOR_BG);
+
+    m_tft.setTextColor(COLOR_TEXT);
+    m_tft.setTextSize(2);
+
+    // Iterate through the temperature profile steps and draw them
+    for (int i = 0; i < m_config.temperatureProfileStepsCount; ++i)
+    {
+        TempProfileStep &step = m_config.temperatureProfile[i];
+        bool isSelected = (i == tempProfile.cursor);
+        drawTempProfileStepLine(i, step, isSelected);
+    }
+}
+
+void SmokeMateGUI::drawTempProfileStepLine(int n, TempProfileStep &step, bool selected)
+{
+    // Calculate Y position for this line
+    int y = GUI_SETTINGS_PANEL_Y_OFFSET + n * GUI_SETTINGS_BLOCK_HEIGHT;
+
+    m_tft.setTextColor(COLOR_TEXT); // Set text color
+    m_tft.setTextSize(2);
+
+    // Draw the background for the block with the primary color if not selected and active color if selected
+    m_tft.fillRect(0, y, SCREEN_WIDTH, GUI_SETTINGS_BLOCK_HEIGHT, selected ? COLOR_HEADER_PRIMARY : COLOR_BG);
+
+    // Compose the label with the strings depending on the content of the step:
+    // Step index (1 based)
+    // Step type: Dwell or Ramp (TempProfileType)
+    // Step duration in minutes
+    // Step starting temperature in F
+    // Step end temperature in F (if applicable, only for Ramp steps)
+    String text = String(n + 1) + " " + (step.type == TEMP_PROFILE_TYPE_DWELL ? "Dwell" : "Ramp") +
+                  " " + String(step.timeMSec / (60 * 1000)) + " min " + step.temperatureStarF;
+    if (step.type == TEMP_PROFILE_TYPE_RAMP)
+    {
+        text += "-" + String(step.temperatureEndF);
+    }
+    text += " F";
+
+    // Draw the label
+    m_tft.setCursor(GUI_SETTINGS_LABEL_OFFSET, y + 4);
+    m_tft.print(text);
+}
+
+void SmokeMateGUI::drawTempProfileStepPanel(const GuiStateTempProfile &tempProfile,
+                                            GuiStateTempProfileEdit &tempProfileEdit)
+{
+    int stepIdx = tempProfile.editingIndex;
+    if (stepIdx < 0 || stepIdx >= m_config.temperatureProfileStepsCount)
+        return;
+    TempProfileStep &step = m_config.temperatureProfile[stepIdx];
+
+    // Clear the panel area
+    m_tft.fillRect(0, GUI_SETTINGS_PANEL_Y_OFFSET, SCREEN_WIDTH, GUI_SETTINGS_PANEL_HEIGHT, COLOR_BG);
+    m_tft.setTextColor(COLOR_TEXT);
+    m_tft.setTextSize(2);
+
+    // Draw step header
+    int y = GUI_SETTINGS_PANEL_Y_OFFSET;
+    m_tft.setCursor(GUI_SETTINGS_LABEL_OFFSET, y + 4);
+    m_tft.print("Step ");
+    m_tft.print(stepIdx + 1);
+
+    // Draw each editable field using the settings list
+    for (int i = 0; i < TEMPPROFILE_SETTINGS_COUNT; ++i)
+    {
+        y = GUI_SETTINGS_PANEL_Y_OFFSET + (i + 1) * GUI_SETTINGS_BLOCK_HEIGHT;
+
+        // If this is the step being edited, highlight it with the primary color
+        bool selected = i == tempProfileEdit.stepIndex;
+        bool editing = tempProfileEdit.editing;
+        // Set the color
+        uint16_t color = selected ? (editing ? COLOR_HEADER_SELECTED : COLOR_HEADER_PRIMARY) : COLOR_BG;
+
+        m_tft.fillRect(0, y, SCREEN_WIDTH, GUI_SETTINGS_BLOCK_HEIGHT, color);
+
+        m_tft.setCursor(GUI_SETTINGS_LABEL_OFFSET, y + 4);
+        m_tft.print(TEMPPROFILE_SETTINGS_LIST[i].label);
+        m_tft.setCursor(GUI_SETTINGS_VALUE_OFFSET, y + 4);
+        m_tft.print(TEMPPROFILE_SETTINGS_LIST[i].getValue(step));
     }
 }

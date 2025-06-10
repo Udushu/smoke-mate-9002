@@ -6,6 +6,22 @@
 typedef unsigned long ulong;
 typedef unsigned int uint;
 
+enum TempProfileType
+{
+    TEMP_PROFILE_TYPE_DWELL,
+    TEMP_PROFILE_TYPE_RAMP
+};
+
+struct TempProfileStep
+{
+    ulong timeMSec;       // Time in milliseconds for this step
+    TempProfileType type; // Type of the step (dwell or ramp)
+    int temperatureStarF; // Temperature in degrees F for this step
+    int temperatureEndF;  // Temperature in degrees F for this step
+};
+
+#define MAX_PROFILE_STEPS 10
+
 struct RunningStatus
 {
     bool isRunning;
@@ -35,6 +51,10 @@ struct Configuration
 {
     int temperatureTarget;
     int temperatureIntervalMSec;
+
+    bool isTemperatureProfilingEnabled;
+    TempProfileStep temperatureProfile[MAX_PROFILE_STEPS];
+    int temperatureProfileStepsCount;
 
     bool isPIDEnabled;
     float kP;
