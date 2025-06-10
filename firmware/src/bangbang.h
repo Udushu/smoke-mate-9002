@@ -5,7 +5,7 @@
 #include "types.h"
 #include "debug.h"
 
-#define DEBUG_BANGBANG
+// #define DEBUG_BANGBANG
 
 enum BangBangState
 {
