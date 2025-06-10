@@ -1,21 +1,29 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11
+# Use official Python 3.11 image as base
+FROM python:3.11-slim
 
-# Update system packages to reduce vulnerabilities
-RUN apt-get update && apt-get upgrade -y && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Set the working directory
+# Set working directory inside the container
 WORKDIR /app
 
-# Copy requirements and install them
+# Install system dependencies (if needed for your packages)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        libffi-dev \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy Python requirements and install them
 COPY requirements.txt .
+
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
+# Copy the rest of the application
 COPY . .
 
-# Expose the port Flask runs on
+# Expose Flask's default port
 EXPOSE 5000
 
 # Run the application
 CMD ["python", "app.py"]
+# Note: Ensure that 'app.py' is the entry point of your Flask application.
