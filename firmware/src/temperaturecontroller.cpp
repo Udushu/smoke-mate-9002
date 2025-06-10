@@ -48,12 +48,12 @@ void TemperatureController::service(int currentTempF, ulong currentTimeMSec)
     {
     case CONTROL_PID:
 
-        servicePIDController(currentTempF, currentTimeMSec);
+        servicePIDController(currentTempF, m_status.temperatureTarget, currentTimeMSec);
         break;
 
     case CONTROL_BANGBANG:
 
-        serviceBangBangController(currentTempF, currentTimeMSec);
+        serviceBangBangController(currentTempF, m_status.temperatureTarget, currentTimeMSec);
 
         break;
 
@@ -71,7 +71,7 @@ int TemperatureController::getLastOutput()
     return m_lastOutput;
 }
 
-void TemperatureController::serviceBangBangController(int currentTempF, ulong currentTimeMSec)
+void TemperatureController::serviceBangBangController(int currentTempF, int targetTempF, ulong currentTimeMSec)
 {
     BangBangState controlOutput = m_bangBang.service(currentTempF, currentTimeMSec);
     m_lastOutput = static_cast<int>(controlOutput); // Store the last output for reference
@@ -100,11 +100,11 @@ void TemperatureController::serviceBangBangController(int currentTempF, ulong cu
     }
 }
 
-void TemperatureController::servicePIDController(int currentTempF, ulong currentTimeMSec)
+void TemperatureController::servicePIDController(int currentTempF, int targetTempF, ulong currentTimeMSec)
 {
 
     // Call the PID service to calculate the control output
-    int controlOutput = m_pid.service(currentTempF, m_config.temperatureTarget, currentTimeMSec);
+    int controlOutput = m_pid.service(currentTempF, targetTempF, currentTimeMSec);
     m_lastOutput = controlOutput; // Store the last output for reference
 #ifdef DEBUG_TEMPERATURE_CONTROLLER
     DEBUG_PRINTLN("TC::PID - CONTROL: " + String(controlOutput));

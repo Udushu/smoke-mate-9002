@@ -29,8 +29,8 @@ private:
     ulong m_lastServiceTimeMSec;  // Last service time in milliseconds
     int m_lastOutput;             // Last output value from the controller
 
-    void servicePIDController(int currentTempF, ulong currentTimeMSec);
-    void serviceBangBangController(int currentTempF, ulong currentTimeMSec);
+    void servicePIDController(int currentTempF, int targetTempF, ulong currentTimeMSec);
+    void serviceBangBangController(int currentTempF, int targetTempF, ulong currentTimeMSec);
 
 public:
     TemperatureController(ControllerStatus &status, Configuration &config, Blower &blower, Door &door);

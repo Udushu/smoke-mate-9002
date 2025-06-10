@@ -109,5 +109,6 @@ void loopServiceKnobButtonEvents();
 void loopUpdateControllerStatus();
 void updateConfiguration();
 void connectToWiFi();
+int calculateTemperatureTarget();
 
 #endif // MAIN_H

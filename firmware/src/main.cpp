@@ -41,6 +41,10 @@ TemperatureController g_temperatureController(g_controllerStatus, g_configuratio
 // Webserver
 WebServer g_webServer = WebServer(WEB_SERVER_PORT, g_controllerStatus, g_configuration);
 
+// Temperature profiling variables
+int g_temperatureProfileStepIndex = -1;      // Current step index in the temperature profile, -1 means no active profile
+ulong g_temperatureProfileStartTimeMSec = 0; // Start time of the current temperature profile step
+
 void setup()
 {
 
@@ -145,6 +149,8 @@ void loop()
   // Service the temperature controller
   if (g_controllerStatus.isRunning && g_thermometerSmoker.isNewTemperatureAvailable())
   {
+    // Update the target temperature
+    g_controllerStatus.temperatureTarget = calculateTemperatureTarget();
     // If the controller is not running, we still want to update the temperature
     g_temperatureController.service(g_thermometerSmoker.getTemperatureF(), g_loopCurrentTimeMSec);
     g_controllerStatus.temperatureError = g_temperatureController.getLastOutput(); // Get the last output from the temperature controller
@@ -253,13 +259,23 @@ void loopUpdateControllerStatus()
   // Update the status variable of the controller
   g_controllerStatus.temperatureSmoker = g_thermometerSmoker.getTemperatureF();
   g_controllerStatus.temperatureFood = g_thermometerFood.getTemperatureF();
-  g_controllerStatus.temperatureTarget = g_configuration.temperatureTarget;
   g_controllerStatus.fanPWM = g_blowerMotor.getPWM();
   g_controllerStatus.doorPosition = g_door.getPosition();
   g_controllerStatus.uptime = g_loopCurrentTimeMSec;
   // g_controllerStatus.RSSI = WiFi.RSSI();
   // g_controllerStatus.bars = WiFi.RSSI() / -20;             // Convert RSSI to bars (0-5)
   g_controllerStatus.isWiFiConnected = WiFi.isConnected(); // Update WiFi connection status
+  if (!g_controllerStatus.isRunning)
+  {
+    if (g_configuration.isTemperatureProfilingEnabled && g_configuration.temperatureProfileStepsCount > 0)
+    {
+      g_controllerStatus.temperatureTarget = g_configuration.temperatureProfile[0].temperatureStarF; // Set target temperature to the first profile step
+    }
+    else
+    {
+      g_controllerStatus.temperatureTarget = g_configuration.temperatureTarget; // Set target temperature to the configured value
+    }
+  }
 }
 
 void setupInitializeControllerStatus(ControllerStatus &controllerStatus)
@@ -476,5 +492,73 @@ void connectToWiFi()
     ArduinoOTA.onError([](ota_error_t error) {});
 
     ArduinoOTA.begin();
+  }
+}
+
+int calculateTemperatureTarget()
+{
+  // Check if the temperature profiling is disabled or there are no configured steps
+  // then just set the target based on the configuration
+  if (!g_configuration.isTemperatureProfilingEnabled ||
+      g_configuration.temperatureProfileStepsCount == 0)
+
+  {
+    // Temperature profiling is disabled or no steps are configured then just return the target temperature
+    return g_configuration.temperatureTarget; // Return the target temperature from configuration
+  }
+  else if (g_configuration.isTemperatureProfilingEnabled && g_temperatureProfileStepIndex >= g_configuration.temperatureProfileStepsCount)
+  {
+    // If the temperature profiling is enabled but the current step index is out of bounds, return the last step's temperature
+    // If the last step is a ramp step, return the end temperature of the last step
+    TempProfileStep lastStep = g_configuration.temperatureProfile[g_configuration.temperatureProfileStepsCount - 1];
+    if (lastStep.type == TEMP_PROFILE_TYPE_RAMP)
+    {
+      return lastStep.temperatureEndF; // Return the end temperature of the last step
+    }
+    else
+    {
+      return lastStep.temperatureStarF; // Return the start temperature of the last step
+    }
+  }
+  else
+  {
+    // Check if the current call is the first call for the profile
+    if (g_temperatureProfileStepIndex < 0)
+    {
+      // If the current step index is -1, it means we are starting the profile
+      g_temperatureProfileStepIndex = 0;                         // Start from the first step
+      g_temperatureProfileStartTimeMSec = g_loopCurrentTimeMSec; // Set the start time for the profile step
+    }
+
+    // Get the current step from the temperature profile
+    TempProfileStep step = g_configuration.temperatureProfile[g_temperatureProfileStepIndex];
+
+    // Check if the time has elapsed for the current step
+    if (g_loopCurrentTimeMSec - g_temperatureProfileStartTimeMSec >= step.timeMSec)
+    {
+      // If the time has elapsed, move to the next step
+      g_temperatureProfileStepIndex++;
+      g_temperatureProfileStartTimeMSec = g_loopCurrentTimeMSec; // Reset the start time for the next step
+    }
+    else
+    {
+      // Check the type of the current step
+      if (step.type == TEMP_PROFILE_TYPE_RAMP)
+      {
+        // If the step is a ramp, calculate the target temperature based on the elapsed time
+        float elapsedTime = (g_loopCurrentTimeMSec - g_temperatureProfileStartTimeMSec) / 1000.0; // Convert to seconds
+        float totalRampTime = step.timeMSec / 1000.0;                                             // Total ramp time in seconds
+        float temperatureChange = step.temperatureEndF - step.temperatureStarF;                   // Temperature change for the ramp
+        float temperaturePerSecond = temperatureChange / totalRampTime;                           // Temperature change per second
+
+        // Calculate the target temperature based on the elapsed time
+        return step.temperatureStarF + (temperaturePerSecond * elapsedTime);
+      }
+      else
+      {
+        // If the step is a dwell, return the start temperature of the dwell step
+        return step.temperatureStarF; // Return the start temperature of the dwell step
+      }
+    }
   }
 }
