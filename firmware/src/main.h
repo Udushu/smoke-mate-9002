@@ -100,5 +100,6 @@ void setupInitializeControllerStatus(ControllerStatus &controllerStatus);
 void loopServiceKnobButtonEvents();
 void loopUpdateControllerStatus();
 void updateConfiguration();
+void connectToWiFi();
 
 #endif // MAIN_H
