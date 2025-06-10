@@ -307,9 +307,11 @@ void loadDefaultConfiguration(Configuration *ptr_configuration)
   ptr_configuration->isForcedDoorPosition = false;
   ptr_configuration->forcedDoorPosition = 0;
 
-  ptr_configuration->isWiFiEnabled = false;  // Start with WiFi disabled
-  ptr_configuration->wifiSSID[0] = '\0';     // Empty SSID
-  ptr_configuration->wifiPassword[0] = '\0'; // Empty password
+  ptr_configuration->isWiFiEnabled = false;                                                    // Start with WiFi disabled
+  strncpy(ptr_configuration->wifiSSID, NETWORK_SSID, sizeof(ptr_configuration->wifiSSID) - 1); // Default SSID
+  ptr_configuration->wifiSSID[sizeof(ptr_configuration->wifiSSID) - 1] = '\0';
+  strncpy(ptr_configuration->wifiPassword, NETWORK_PASSWORD, sizeof(ptr_configuration->wifiPassword) - 1); // Default password
+  ptr_configuration->wifiPassword[sizeof(ptr_configuration->wifiPassword) - 1] = '\0';
 }
 
 void setupInitializeNVRAM()

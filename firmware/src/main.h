@@ -19,6 +19,14 @@
 #include "debug.h"
 #include "webserver.h"
 
+// ============================ DEFAULT PASSWORDS =========================
+#if __has_include("passwords.h")
+#include "passwords.h"
+#else
+#define NETWORK_SSID ""
+#define NETWORK_PASSWORD ""
+#endif
+
 // ============================ COMPILATION FLAGS =========================
 // #define DEBUG_MAIN
 // #define NVRAM_DELETE_ON_STARTUP

@@ -1,4 +1,5 @@
 *.db
+passwords.h
 
 .pio
 .vscode/.browse.c_cpp.db*
