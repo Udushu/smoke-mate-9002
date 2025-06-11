@@ -45,6 +45,11 @@ struct ControllerStatus
     bool isWiFiConnected;
     String networkName;
     int temperatureError;
+    int isProfileRunning;                       // 0 - not running, 1 - running, 2 - finished
+    int temperatureProfileStepIndex;            // Current step index in the temperature profile, -1 means no active profile
+    int temperatureProfileStartTimeMSec;        // Start time of the current temperature profile step
+    int temperatureProfileStepsCount;           // Number of steps in the temperature profile
+    TempProfileType temperatureProfileStepType; // Type of the current temperature profile step
 };
 
 struct Configuration
