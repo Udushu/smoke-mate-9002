@@ -220,11 +220,34 @@ void WebServer::handleApiConfigSet(AsyncWebServerRequest *request, uint8_t *data
         return;
     }
 
-    // Example: Only update fields present in the JSON
+    // Update all Configuration fields if present in JSON
     if (doc.containsKey("temperatureTarget"))
         m_config.temperatureTarget = doc["temperatureTarget"];
     if (doc.containsKey("temperatureIntervalMSec"))
         m_config.temperatureIntervalMSec = doc["temperatureIntervalMSec"];
+
+    if (doc.containsKey("isTemperatureProfilingEnabled"))
+        m_config.isTemperatureProfilingEnabled = doc["isTemperatureProfilingEnabled"];
+    if (doc.containsKey("temperatureProfileStepsCount"))
+        m_config.temperatureProfileStepsCount = doc["temperatureProfileStepsCount"];
+    if (doc.containsKey("temperatureProfile"))
+    {
+        JsonArray arr = doc["temperatureProfile"].as<JsonArray>();
+        int count = min((int)arr.size(), MAX_PROFILE_STEPS);
+        for (int i = 0; i < count; ++i)
+        {
+            JsonObject step = arr[i];
+            if (step.containsKey("timeMSec"))
+                m_config.temperatureProfile[i].timeMSec = step["timeMSec"];
+            if (step.containsKey("type"))
+                m_config.temperatureProfile[i].type = (TempProfileType)((int)step["type"]);
+            if (step.containsKey("temperatureStarF"))
+                m_config.temperatureProfile[i].temperatureStarF = step["temperatureStarF"];
+            if (step.containsKey("temperatureEndF"))
+                m_config.temperatureProfile[i].temperatureEndF = step["temperatureEndF"];
+        }
+    }
+
     if (doc.containsKey("isPIDEnabled"))
         m_config.isPIDEnabled = doc["isPIDEnabled"];
     if (doc.containsKey("kP"))
@@ -233,6 +256,7 @@ void WebServer::handleApiConfigSet(AsyncWebServerRequest *request, uint8_t *data
         m_config.kI = doc["kI"];
     if (doc.containsKey("kD"))
         m_config.kD = doc["kD"];
+
     if (doc.containsKey("bangBangLowThreshold"))
         m_config.bangBangLowThreshold = doc["bangBangLowThreshold"];
     if (doc.containsKey("bangBangHighThreshold"))
@@ -241,10 +265,12 @@ void WebServer::handleApiConfigSet(AsyncWebServerRequest *request, uint8_t *data
         m_config.bangBangHysteresis = doc["bangBangHysteresis"];
     if (doc.containsKey("bangBangFanSpeed"))
         m_config.bangBangFanSpeed = doc["bangBangFanSpeed"];
+
     if (doc.containsKey("doorOpenPosition"))
         m_config.doorOpenPosition = doc["doorOpenPosition"];
     if (doc.containsKey("doorClosePosition"))
         m_config.doorClosePosition = doc["doorClosePosition"];
+
     if (doc.containsKey("themometerSmokerGain"))
         m_config.themometerSmokerGain = doc["themometerSmokerGain"];
     if (doc.containsKey("themometerSmokerOffset"))
@@ -253,21 +279,26 @@ void WebServer::handleApiConfigSet(AsyncWebServerRequest *request, uint8_t *data
         m_config.themometerFoodGain = doc["themometerFoodGain"];
     if (doc.containsKey("themometerFoodOffset"))
         m_config.themometerFoodOffset = doc["themometerFoodOffset"];
+
     if (doc.containsKey("isThemometerSimulated"))
         m_config.isThemometerSimulated = doc["isThemometerSimulated"];
+
     if (doc.containsKey("isForcedFanPWM"))
         m_config.isForcedFanPWM = doc["isForcedFanPWM"];
     if (doc.containsKey("forcedFanPWM"))
         m_config.forcedFanPWM = doc["forcedFanPWM"];
+
     if (doc.containsKey("isForcedDoorPosition"))
         m_config.isForcedDoorPosition = doc["isForcedDoorPosition"];
     if (doc.containsKey("forcedDoorPosition"))
         m_config.forcedDoorPosition = doc["forcedDoorPosition"];
+
     if (doc.containsKey("isWiFiEnabled"))
         m_config.isWiFiEnabled = doc["isWiFiEnabled"];
     if (doc.containsKey("wifiSSID"))
         strncpy(m_config.wifiSSID, doc["wifiSSID"], sizeof(m_config.wifiSSID));
-    // if (doc.containsKey("wifiPassword")) strncpy(m_config.wifiPassword, doc["wifiPassword"], sizeof(m_config.wifiPassword));
+    if (doc.containsKey("wifiPassword"))
+        strncpy(m_config.wifiPassword, doc["wifiPassword"], sizeof(m_config.wifiPassword));
 
     // Optionally call the callback
     if (m_configSetCallback)
