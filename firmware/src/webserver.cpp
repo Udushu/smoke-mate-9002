@@ -148,6 +148,11 @@ void WebServer::handleApiStatus(AsyncWebServerRequest *request)
     doc["isWiFiConnected"] = s.isWiFiConnected;
     doc["networkName"] = s.networkName;
     doc["temperatureError"] = s.temperatureError; // Add temperature error if available
+    doc["isProfileRunning"] = s.isProfileRunning;
+    doc["temperatureProfileStepIndex"] = s.temperatureProfileStepIndex;
+    doc["temperatureProfileStartTimeMSec"] = s.temperatureProfileStartTimeMSec;
+    doc["temperatureProfileStepsCount"] = s.temperatureProfileStepsCount;
+    doc["temperatureProfileStepType"] = static_cast<int>(s.temperatureProfileStepType); // Convert enum to int
 
     String json;
     serializeJson(doc, json);
@@ -161,6 +166,19 @@ void WebServer::handleApiConfigGet(AsyncWebServerRequest *request)
 
     doc["temperatureTarget"] = c.temperatureTarget;
     doc["temperatureIntervalMSec"] = c.temperatureIntervalMSec;
+
+    doc["isTemperatureProfilingEnabled"] = c.isTemperatureProfilingEnabled;
+    doc["temperatureProfileStepsCount"] = c.temperatureProfileStepsCount;
+    JsonArray profileArray = doc.createNestedArray("temperatureProfile");
+    for (int i = 0; i < c.temperatureProfileStepsCount; ++i)
+    {
+        JsonObject step = profileArray.createNestedObject();
+        step["temperatureStarF"] = c.temperatureProfile[i].temperatureStarF;
+        step["temperatureEndF"] = c.temperatureProfile[i].temperatureEndF;
+        step["timeMSec"] = c.temperatureProfile[i].timeMSec;
+        step["type"] = static_cast<int>(c.temperatureProfile[i].type); // Convert enum to int
+    }
+
     doc["isPIDEnabled"] = c.isPIDEnabled;
     doc["kP"] = c.kP;
     doc["kI"] = c.kI;
