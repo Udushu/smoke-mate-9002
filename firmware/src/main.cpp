@@ -143,6 +143,13 @@ void loop()
       // Close the door
       g_door.close();
     }
+    else if (g_controllerStatus.isRunning && !g_prevIsRunning)
+    {
+      // If the controller just started, set the start time
+      g_controllerStatus.controllerStartMSec = g_loopCurrentTimeMSec;
+      // Reset the temperature profile step index
+      g_temperatureProfileStepIndex = -1; // Reset the temperature profile step index
+    }
     g_prevIsRunning = g_controllerStatus.isRunning; // Update the previous running state
   }
 
@@ -275,6 +282,33 @@ void loopUpdateControllerStatus()
     {
       g_controllerStatus.temperatureTarget = g_configuration.temperatureTarget; // Set target temperature to the configured value
     }
+  }
+
+  int temperatureProfileisRunning = 0;
+  if (g_temperatureProfileStepIndex == -1)
+  {
+    temperatureProfileisRunning = 0; // No active profile step, profile is not running
+  }
+  else if (g_temperatureProfileStepIndex >= 0 &&
+           g_temperatureProfileStepIndex < g_configuration.temperatureProfileStepsCount)
+  {
+    temperatureProfileisRunning = 1; // Profile is running
+  }
+  else
+  {
+    temperatureProfileisRunning = 2; // Profile finished
+  }
+  g_controllerStatus.isProfileRunning = temperatureProfileisRunning;
+  g_controllerStatus.temperatureProfileStepIndex = g_temperatureProfileStepIndex;                 // Current step index in the temperature profile
+  g_controllerStatus.temperatureProfileStartTimeMSec = g_temperatureProfileStartTimeMSec;         // Start time of the current temperature profile step
+  g_controllerStatus.temperatureProfileStepsCount = g_configuration.temperatureProfileStepsCount; // Number of steps in the temperature profile
+  if (g_temperatureProfileStepIndex >= 0 && g_temperatureProfileStepIndex < g_configuration.temperatureProfileStepsCount)
+  {
+    g_controllerStatus.temperatureProfileStepType = g_configuration.temperatureProfile[g_temperatureProfileStepIndex].type; // Type of the current temperature profile step
+  }
+  else
+  {
+    g_controllerStatus.temperatureProfileStepType = TEMP_PROFILE_TYPE_DWELL; // Default to dwell type if no active profile step
   }
 }
 
