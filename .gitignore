@@ -1,5 +1,9 @@
 *.db
 passwords.h
+*.gitignore
+*launch.json
+*settings.json
+*c_cpp_properties.json
 
 .pio
 .vscode/.browse.c_cpp.db*
