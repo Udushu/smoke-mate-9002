@@ -322,14 +322,24 @@ static String getTempProfileDuration(const TempProfileStep &step)
 void incTempProfileDuration(TempProfileStep &step)
 {
     if (step.timeMSec + GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP <= GUI_SETTINGS_TEMP_PROFILE_DURATION_MAX)
-        step.timeMSec += GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP;
+    {
+        int dt = step.timeMSec >= 10 * GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP
+                     ? GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP * 10
+                     : GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP;
+        step.timeMSec += dt;
+    }
     else
         step.timeMSec = GUI_SETTINGS_TEMP_PROFILE_DURATION_MAX;
 }
 void decTempProfileDuration(TempProfileStep &step)
 {
     if (step.timeMSec - GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP >= GUI_SETTINGS_TEMP_PROFILE_DURATION_MIN)
-        step.timeMSec -= GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP;
+    {
+        int dt = step.timeMSec > 10 * GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP
+                     ? GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP * 10
+                     : GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP;
+        step.timeMSec -= dt;
+    }
     else
         step.timeMSec = GUI_SETTINGS_TEMP_PROFILE_DURATION_MIN;
 }

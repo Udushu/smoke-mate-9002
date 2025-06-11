@@ -93,7 +93,7 @@
 #define GUI_SETTINGS_PID_K_DECIMAL_PLACES 2 // Decimal places for PID settings
 
 // Temperature profile duration constants
-#define GUI_SETTINGS_TEMP_PROFILE_DURATION_MIN 10 * 60 * 1000      // 10 minutes in milliseconds
+#define GUI_SETTINGS_TEMP_PROFILE_DURATION_MIN 1 * 60 * 1000       // 10 minutes in milliseconds
 #define GUI_SETTINGS_TEMP_PROFILE_DURATION_MAX 12 * 60 * 60 * 1000 // 12 hours in milliseconds
 #define GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP 1 * 60 * 1000      // 1 minute in milliseconds
 
