@@ -29,7 +29,12 @@ class Database:
                     ipAddress TEXT,
                     isWiFiConnected BOOLEAN,
                     networkName TEXT,
-                    temperatureError INTEGER
+                    temperatureError INTEGER,
+                    isProfileRunning TEXT,
+                    temperatureProfileStepIndex INTEGER,
+                    temperatureProfileStartTimeMSec INTEGER,
+                    temperatureProfileStepsCount INTEGER,
+                    temperatureProfileStepType TEXT
                 )
             ''')
             conn.commit()
@@ -38,14 +43,15 @@ class Database:
     def log_status(self, data):
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
-        # Use local time in ISO format for the timestamp
         local_timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         c.execute('''
             INSERT INTO status_log (
                 timestamp, isRunning, uuid, uptime, controllerStartMSec, temperatureSmoker,
                 temperatureFood, temperatureTarget, fanPWM, doorPosition, RSSI,
-                bars, ipAddress, isWiFiConnected, networkName, temperatureError
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+                bars, ipAddress, isWiFiConnected, networkName, temperatureError,
+                isProfileRunning, temperatureProfileStepIndex, temperatureProfileStartTimeMSec,
+                temperatureProfileStepsCount, temperatureProfileStepType
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             local_timestamp,
             data.get('isRunning'),
@@ -62,7 +68,12 @@ class Database:
             data.get('ipAddress'),
             data.get('isWiFiConnected'),
             data.get('networkName'),
-            data.get('temperatureError') 
+            data.get('temperatureError'),
+            data.get('isProfileRunning'),
+            data.get('temperatureProfileStepIndex'),
+            data.get('temperatureProfileStartTimeMSec'),
+            data.get('temperatureProfileStepsCount'),
+            data.get('temperatureProfileStepType')
         ))
         conn.commit()
         conn.close()
