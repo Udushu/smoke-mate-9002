@@ -52,6 +52,28 @@ def poll_status_api():
                 status["networkName"] = data.get('networkName', '')
                 status["temperatureError"] = data.get('temperatureError', 0)
                 
+                runningState = int(data.get('isProfileRunning', 0))
+                if runningState == 0:
+                    status["isProfileRunning"] = "OFF"
+                elif runningState == 1:
+                    status["isProfileRunning"] = "ON"
+                elif runningState == 2:
+                    status["isProfileRunning"] = "FINISHED"
+                else:
+                    status["isProfileRunning"] = "UNKNOWN"
+                
+                status["temperatureProfileStepIndex"] = data.get('temperatureProfileStepIndex', -1)
+                status["temperatureProfileStartTimeMSec"] = data.get('temperatureProfileStartTimeMSec', 0)
+                status["temperatureProfileStepsCount"] = data.get('temperatureProfileStepsCount', 0)
+                stepType = int(data.get('temperatureProfileStepType', 0))
+                if stepType == 0:
+                    status["temperatureProfileStepType"] = "DWELLING"
+                elif stepType == 1:
+                    status["temperatureProfileStepType"] = "RAMPING"
+                else:
+                    status["temperatureProfileStepType"] = "UNKNOWN"
+                    
+                
                 # Check if the controller has transitioned from NOT RUNNING to RUNNING
                 current_is_running = data.get('isRunning')
                 if (last_is_running is not None) and (not last_is_running) and current_is_running:
@@ -89,17 +111,25 @@ def poll_status_config():
         try:
             response = requests.get(BASE_URL + API_CONFIG_ENDPOINT)
             if response.status_code == 200:
-                config_data = response.json()                
+                config_data = response.json()
+                print(config_data)
+                # Parse temperatureProfile steps if present
+                if "temperatureProfile" in config_data:
+                    steps = []
+                    for step in config_data.get("temperatureProfile", []):
+                        steps.append({
+                            "timeMSec": step.get("timeMSec", 0),
+                            "type": step.get("type", 0),  # 0: DWELL, 1: RAMP
+                            "temperatureStartF": step.get("temperatureStartF", 0),
+                            "temperatureEndF": step.get("temperatureEndF", 0)
+                        })
+                    config_data["temperatureProfile"] = steps
                 config = config_data
-
-                # You can add db.log_config(config_data) if you want to log config as well
             else:
                 pass
-                # print("Failed to fetch config, status code:", response.status_code)
         except Exception as e:
-            pass
-            # print("Error fetching config:", e)
-        time.sleep(API_CONFIG_POLL_INTERVAL)  # Poll every API_CONFIG_POLL_INTERVAL seconds
+            print("Error fetching configuration:", e)
+        time.sleep(API_CONFIG_POLL_INTERVAL)
         
 def cleanup_old_records():
     while True:
@@ -152,24 +182,98 @@ def stop_controller():
     
 @app.route('/')
 def index():
-    # Simple HTML template showing the latest status
+    # Enhanced HTML template showing the latest status and configuration
     html = """
     <html>
-    <head><title>Latest Status</title></head>
+    <head>
+        <title>Latest Status</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/superhero/bootstrap.min.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            body { padding-top: 40px; }
+            .table th, .table td { vertical-align: middle; }
+            .profile-table th, .profile-table td { font-size: 0.95em; }
+        </style>
+    </head>
     <body>
-        <h1>Latest Status</h1>
-        <table border="1" cellpadding="5">
-            {% for key, value in status.items() %}
-            <tr>
-                <th>{{ key }}</th>
-                <td>{{ value }}</td>
-            </tr>
-            {% endfor %}
-        </table>
+        <div class="container">
+            <h1 class="mb-4">Latest Status</h1>
+            <table class="table table-striped table-bordered table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for key, value in status.items() %}
+                <tr>
+                    <th>{{ key }}</th>
+                    <td>{{ value }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <h2 class="mt-5 mb-4">Current Configuration</h2>
+            <table class="table table-striped table-bordered table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for key, value in config.items() %}
+                    {% if key == 'temperatureProfile' and value %}
+                        <tr>
+                            <th>temperatureProfile</th>
+                            <td>
+                                <table class="table table-sm table-bordered profile-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>timeMSec</th>
+                                            <th>type</th>
+                                            <th>temperatureStarF</th>
+                                            <th>temperatureEndF</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for step in value %}
+                                        <tr>
+                                            <td>{{ loop.index0 }}</td>
+                                            <td>{{ step.timeMSec }}</td>
+                                            <td>
+                                                {% if step.type == 0 %}
+                                                    DWELL
+                                                {% elif step.type == 1 %}
+                                                    RAMP
+                                                {% else %}
+                                                    UNKNOWN
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ step.temperatureStarF }}</td>
+                                            <td>{{ step.temperatureEndF }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    {% elif key != 'temperatureProfile' %}
+                        <tr>
+                            <th>{{ key }}</th>
+                            <td>{{ value }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </body>
     </html>
     """
-    return render_template_string(html, status=status)
+    return render_template_string(html, status=status, config=config)
 
 # Start polling in a background thread
 threading.Thread(target=poll_status_api, daemon=True).start()
@@ -201,32 +305,41 @@ if __name__ == '__main__':
         'ipAddress': '192.168.2.159', 
         'isWiFiConnected': False,
         'networkName': '',
-        'temperatureError':0
-        }
-    config = {        
-        'temperatureTarget': 0, 
-        'temperatureIntervalMSec': 0, 
-        'isPIDEnabled': False, 
-        'kP': 0, 
-        'kI': 0, 
-        'kD': 0, 
-        'bangBangLowThreshold': 0, 
-        'bangBangHighThreshold': 0, 
-        'bangBangHysteresis': 0, 
-        'bangBangFanSpeed': 0, 
-        'doorOpenPosition': 0, 
-        'doorClosePosition': 0, 
-        'themometerSmokerGain': 0, 
-        'themometerSmokerOffset': 0, 
-        'themometerFoodGain': 0, 
-        'themometerFoodOffset': 0, 
-        'isThemometerSimulated': False, 
-        'isForcedFanPWM': False, 
-        'forcedFanPWM': 0, 
-        'isForcedDoorPosition': False, 
-        'forcedDoorPosition': 0, 
-        'isWiFiEnabled': False, 
-        'wifiSSID': 'BELL529'
+        'temperatureError': 0,
+        'isProfileRunning': 'UNKNOWN',
+        'temperatureProfileStepIndex': -1,
+        'temperatureProfileStartTimeMSec': 0,
+        'temperatureProfileStepsCount': 0,
+        'temperatureProfileStepType': 'UNKNOWN'
+    }
+    config = {
+        'temperatureTarget': 0,
+        'temperatureIntervalMSec': 0,
+        'isTemperatureProfilingEnabled': False,
+        'temperatureProfile': [],
+        'temperatureProfileStepsCount': 0,
+        'isPIDEnabled': False,
+        'kP': 0.0,
+        'kI': 0.0,
+        'kD': 0.0,
+        'bangBangLowThreshold': 0,
+        'bangBangHighThreshold': 0,
+        'bangBangHysteresis': 0,
+        'bangBangFanSpeed': 0,
+        'doorOpenPosition': 0,
+        'doorClosePosition': 0,
+        'themometerSmokerGain': 0.0,
+        'themometerSmokerOffset': 0.0,
+        'themometerFoodGain': 0.0,
+        'themometerFoodOffset': 0.0,
+        'isThemometerSimulated': False,
+        'isForcedFanPWM': False,
+        'forcedFanPWM': 0,
+        'isForcedDoorPosition': False,
+        'forcedDoorPosition': 0,
+        'isWiFiEnabled': False,
+        'wifiSSID': '',
+        'wifiPassword': ''
     }
     last_is_running = None
     run_start_signature = None
