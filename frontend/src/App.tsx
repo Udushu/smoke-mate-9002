@@ -33,27 +33,32 @@ const App: React.FC = () => {
           // Set the device status and update the state
           // Unpack the data.status into DeviceStatus object
           const deviceStatus: DeviceStatus = {
-            timeStamp: new Date(),
+            timestamp: data.timestamp,
             isConnected: data.isConnected,
+            isRunning: data.isRunning,
+            uuid: data.uuid,
+            uptime: data.uptime,
+            controllerStartMSec: data.controllerStartMSec,
+            temperatureSmoker: data.temperatureSmoker,
+            temperatureFood: data.temperatureFood,
+            temperatureTarget: data.temperatureTarget,
+            fanPWM: data.fanPWM,
+            doorPosition: data.doorPosition,
             RSSI: data.RSSI,
             bars: data.bars,
-            controllerStartMSec: data.controllerStartMSec,
-            doorPosition: data.doorPosition,
-            fanPWM: data.fanPWM,
             ipAddress: data.ipAddress,
-            isRunning: data.isRunning,
             isWiFiConnected: data.isWiFiConnected,
-            temperatureFood: data.temperatureFood,
-            temperatureSmoker: data.temperatureSmoker,
-            temperatureTarget: data.temperatureTarget,
-            uptime: data.uptime,
-            uuid: data.uuid,
             networkName: data.networkName,
             temperatureError: data.temperatureError,
+            isProfileRunning: data.isProfileRunning,
+            temperatureProfileStepIndex: data.temperatureProfileStepIndex,
+            temperatureProfileStartTimeMSec: data.temperatureProfileStartTimeMSec,
+            temperatureProfileStepsCount: data.temperatureProfileStepsCount,
+            temperatureProfileStepType: data.temperatureProfileStepType,
           };
           setStatus(deviceStatus);
           // console.log("Is connected: ", isConnected, "Is running: ", isRunning);
-          console.log(deviceStatus);
+          // console.log(deviceStatus);
         })
         .catch((error) => console.log("Error:", error));
     }, BACKEND_POLLING_INTERVAL); // Fetch every 1 second

@@ -15,7 +15,7 @@ const TemperatureBar: React.FC<TemperatureBarProps> = ({ status, config }) => (
         value={status.temperatureSmoker}
         unit="F"
         id="temperature-smoker"
-        target={config.temperatureTarget}
+        target={status.temperatureTarget}
         label="Smoker Temperature"
       />
     </div>
