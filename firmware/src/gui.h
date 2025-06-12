@@ -18,7 +18,7 @@
 
 // CHART CONSTANTS ================================================================================
 #define GUI_MAX_HISTORY_ENTRIES 1800                      // Maximum number of temperature history entries to keep
-#define GUI_CHART_UPDATE_INTERVAL_MSEC 2 * 1000           // Interval to update the history in milliseconds
+#define GUI_CHART_UPDATE_INTERVAL_MSEC 5 * 1000           // Interval to update the history in milliseconds
 #define GUI_CHART_MIN2HOUR_SWITCH_MSEC 2 * 60 * 60 * 1000 // Switch to 2-hour chart mode after this time
 
 // COLOR DEFINITIONS ==============================================================================
