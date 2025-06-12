@@ -1,7 +1,7 @@
 @echo off
 set IMAGE_NAME=smokemate-frontend
 set CONTAINER_NAME=smokemate-frontend-container
-set HOST_PORT=3000
+set HOST_PORT=80
 set CONTAINER_PORT=80
 
 REM Build the Docker image
