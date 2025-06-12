@@ -131,6 +131,21 @@ def poll_status_config():
             print("Error fetching configuration:", e)
         time.sleep(API_CONFIG_POLL_INTERVAL)
         
+def set_device_config(new_config):
+    """
+    Send a POST request to the controller's /config endpoint to update configuration.
+    Returns the response from the device.
+    """
+    try:
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(BASE_URL + '/config', data=json.dumps(new_config), headers=headers)
+        if response.status_code == 200:
+            return {'success': True, 'device_response': response.json()}
+        else:
+            return {'success': False, 'error': f"Status code: {response.status_code}", 'device_response': response.text}
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+        
 def cleanup_old_records():
     while True:
         db.cleanup_old_records()
@@ -144,6 +159,12 @@ def get_status():
 @app.route('/config', methods=['GET'])
 def get_config():
     return jsonify(config)
+
+@app.route('/set-config', methods=['POST'])
+def set_config():
+    new_config = request.get_json()
+    result = set_device_config(new_config)
+    return jsonify(result)
 
 @app.route('/run-status-history', methods=['GET'])
 def get_session_status():
@@ -338,8 +359,6 @@ if __name__ == '__main__':
         'isForcedDoorPosition': False,
         'forcedDoorPosition': 0,
         'isWiFiEnabled': False,
-        'wifiSSID': '',
-        'wifiPassword': ''
     }
     last_is_running = None
     run_start_signature = None
