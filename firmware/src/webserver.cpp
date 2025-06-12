@@ -173,7 +173,7 @@ void WebServer::handleApiConfigGet(AsyncWebServerRequest *request)
     for (int i = 0; i < c.temperatureProfileStepsCount; ++i)
     {
         JsonObject step = profileArray.createNestedObject();
-        step["temperatureStarF"] = c.temperatureProfile[i].temperatureStarF;
+        step["temperatureStartF"] = c.temperatureProfile[i].temperatureStartF;
         step["temperatureEndF"] = c.temperatureProfile[i].temperatureEndF;
         step["timeMSec"] = c.temperatureProfile[i].timeMSec;
         step["type"] = static_cast<int>(c.temperatureProfile[i].type); // Convert enum to int
@@ -241,8 +241,8 @@ void WebServer::handleApiConfigSet(AsyncWebServerRequest *request, uint8_t *data
                 m_config.temperatureProfile[i].timeMSec = step["timeMSec"];
             if (step.containsKey("type"))
                 m_config.temperatureProfile[i].type = (TempProfileType)((int)step["type"]);
-            if (step.containsKey("temperatureStarF"))
-                m_config.temperatureProfile[i].temperatureStarF = step["temperatureStarF"];
+            if (step.containsKey("temperatureStartF"))
+                m_config.temperatureProfile[i].temperatureStartF = step["temperatureStartF"];
             if (step.containsKey("temperatureEndF"))
                 m_config.temperatureProfile[i].temperatureEndF = step["temperatureEndF"];
         }

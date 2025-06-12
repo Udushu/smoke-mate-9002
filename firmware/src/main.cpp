@@ -40,6 +40,8 @@ TemperatureController g_temperatureController(g_controllerStatus, g_configuratio
 
 // Webserver
 WebServer g_webServer = WebServer(WEB_SERVER_PORT, g_controllerStatus, g_configuration);
+bool g_prevWiFiConnected = false;                      // Previous WiFi connected state for the controller
+int g_wiFiConnectAttempts = MAX_WIFI_CONNECT_ATTEMPTS; // Maximum number of attempts to connect to WiFi
 
 // Temperature profiling variables
 int g_temperatureProfileStepIndex = -1;      // Current step index in the temperature profile, -1 means no active profile
@@ -193,6 +195,28 @@ void loop()
     {
       g_controllerStatus.RSSI = WiFi.RSSI();
       g_controllerStatus.bars = WiFi.RSSI() / -20; // Convert RSSI to bars (0-5)
+
+      // --- WiFi/server auto-reconnect logic ---
+      if (g_prevWiFiConnected &&
+          !g_controllerStatus.isWiFiConnected &&
+          g_wiFiConnectAttempts < MAX_WIFI_CONNECT_ATTEMPTS)
+      {
+        // Lost connection, try to reconnect and restart server
+        DEBUG_PRINTLN("WiFi connection lost, attempting to reconnect...");
+        connectToWiFi();
+        if (g_controllerStatus.isWiFiConnected)
+        {
+          DEBUG_PRINTLN("WiFi reconnected, restarting web server...");
+          g_webServer.begin();
+          g_wiFiConnectAttempts = 0; // Reset the connection attempts
+        }
+        else
+        {
+          g_wiFiConnectAttempts++; // Increment the connection attempts
+          DEBUG_PRINTLN("WiFi reconnect attempt failed, retrying...");
+        }
+      }
+      g_prevWiFiConnected = g_controllerStatus.isWiFiConnected;
     }
   }
 }
@@ -276,7 +300,7 @@ void loopUpdateControllerStatus()
   {
     if (g_configuration.isTemperatureProfilingEnabled && g_configuration.temperatureProfileStepsCount > 0)
     {
-      g_controllerStatus.temperatureTarget = g_configuration.temperatureProfile[0].temperatureStarF; // Set target temperature to the first profile step
+      g_controllerStatus.temperatureTarget = g_configuration.temperatureProfile[0].temperatureStartF; // Set target temperature to the first profile step
     }
     else
     {
@@ -337,9 +361,9 @@ void loadDefaultConfiguration(Configuration *ptr_configuration)
   for (int i = 0; i < MAX_PROFILE_STEPS; i++)
   {
     ptr_configuration->temperatureProfile[i].timeMSec = 1000;
-    ptr_configuration->temperatureProfile[i].type = TEMP_PROFILE_TYPE_DWELL;                // Default to dwell type
-    ptr_configuration->temperatureProfile[i].temperatureStarF = DEFAULT_TEMPERATURE_TARGET; // Default to target temperature
-    ptr_configuration->temperatureProfile[i].temperatureEndF = DEFAULT_TEMPERATURE_TARGET;  // Default to target temperature
+    ptr_configuration->temperatureProfile[i].type = TEMP_PROFILE_TYPE_DWELL;                 // Default to dwell type
+    ptr_configuration->temperatureProfile[i].temperatureStartF = DEFAULT_TEMPERATURE_TARGET; // Default to target temperature
+    ptr_configuration->temperatureProfile[i].temperatureEndF = DEFAULT_TEMPERATURE_TARGET;   // Default to target temperature
   }
 
   ptr_configuration->isPIDEnabled = true;
@@ -462,6 +486,7 @@ void connectToWiFi()
           g_controllerStatus.bars = 0;
 
         g_controllerStatus.isWiFiConnected = true; // Set WiFi connected status
+        g_prevWiFiConnected = true;                // Update previous WiFi connected status
         DEBUG_PRINTLN("Connected to WiFi");
         // print the IP address
         DEBUG_PRINTLN("IP Address: ");
@@ -551,7 +576,7 @@ int calculateTemperatureTarget()
     }
     else
     {
-      return lastStep.temperatureStarF; // Return the start temperature of the last step
+      return lastStep.temperatureStartF; // Return the start temperature of the last step
     }
   }
   else
@@ -582,16 +607,16 @@ int calculateTemperatureTarget()
         // If the step is a ramp, calculate the target temperature based on the elapsed time
         float elapsedTime = (g_loopCurrentTimeMSec - g_temperatureProfileStartTimeMSec) / 1000.0; // Convert to seconds
         float totalRampTime = step.timeMSec / 1000.0;                                             // Total ramp time in seconds
-        float temperatureChange = step.temperatureEndF - step.temperatureStarF;                   // Temperature change for the ramp
+        float temperatureChange = step.temperatureEndF - step.temperatureStartF;                  // Temperature change for the ramp
         float temperaturePerSecond = temperatureChange / totalRampTime;                           // Temperature change per second
 
         // Calculate the target temperature based on the elapsed time
-        return step.temperatureStarF + (temperaturePerSecond * elapsedTime);
+        return step.temperatureStartF + (temperaturePerSecond * elapsedTime);
       }
       else
       {
         // If the step is a dwell, return the start temperature of the dwell step
-        return step.temperatureStarF; // Return the start temperature of the dwell step
+        return step.temperatureStartF; // Return the start temperature of the dwell step
       }
     }
   }

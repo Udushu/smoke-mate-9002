@@ -345,21 +345,21 @@ void decTempProfileDuration(TempProfileStep &step)
 }
 static String getTempProfileT1(const TempProfileStep &step)
 {
-    return String(step.temperatureStarF) + " F";
+    return String(step.temperatureStartF) + " F";
 }
 void incTempProfileT1(TempProfileStep &step)
 {
-    if (step.temperatureStarF + GUI_SETTINGS_TEMP_STEP <= GUI_SETTINGS_TEMP_MAX)
-        step.temperatureStarF += GUI_SETTINGS_TEMP_STEP;
+    if (step.temperatureStartF + GUI_SETTINGS_TEMP_STEP <= GUI_SETTINGS_TEMP_MAX)
+        step.temperatureStartF += GUI_SETTINGS_TEMP_STEP;
     else
-        step.temperatureStarF = GUI_SETTINGS_TEMP_MAX;
+        step.temperatureStartF = GUI_SETTINGS_TEMP_MAX;
 }
 void decTempProfileT1(TempProfileStep &step)
 {
-    if (step.temperatureStarF - GUI_SETTINGS_TEMP_STEP >= GUI_SETTINGS_TEMP_MIN)
-        step.temperatureStarF -= GUI_SETTINGS_TEMP_STEP;
+    if (step.temperatureStartF - GUI_SETTINGS_TEMP_STEP >= GUI_SETTINGS_TEMP_MIN)
+        step.temperatureStartF -= GUI_SETTINGS_TEMP_STEP;
     else
-        step.temperatureStarF = GUI_SETTINGS_TEMP_MIN;
+        step.temperatureStartF = GUI_SETTINGS_TEMP_MIN;
 }
 static String getTempProfileT2(const TempProfileStep &step)
 {
@@ -1641,7 +1641,7 @@ void SmokeMateGUI::drawTempProfileStepLine(int n, TempProfileStep &step, bool se
     // Step starting temperature in F
     // Step end temperature in F (if applicable, only for Ramp steps)
     String text = String(n + 1) + " " + (step.type == TEMP_PROFILE_TYPE_DWELL ? "Dwell" : "Ramp") +
-                  " " + String(step.timeMSec / (60 * 1000)) + " min " + step.temperatureStarF;
+                  " " + String(step.timeMSec / (60 * 1000)) + " min " + step.temperatureStartF;
     if (step.type == TEMP_PROFILE_TYPE_RAMP)
     {
         text += "-" + String(step.temperatureEndF);

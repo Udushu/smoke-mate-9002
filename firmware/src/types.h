@@ -14,10 +14,10 @@ enum TempProfileType
 
 struct TempProfileStep
 {
-    ulong timeMSec;       // Time in milliseconds for this step
-    TempProfileType type; // Type of the step (dwell or ramp)
-    int temperatureStarF; // Temperature in degrees F for this step
-    int temperatureEndF;  // Temperature in degrees F for this step
+    ulong timeMSec;        // Time in milliseconds for this step
+    TempProfileType type;  // Type of the step (dwell or ramp)
+    int temperatureStartF; // Temperature in degrees F for this step
+    int temperatureEndF;   // Temperature in degrees F for this step
 };
 
 #define MAX_PROFILE_STEPS 10
