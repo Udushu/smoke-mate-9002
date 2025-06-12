@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootswatch/dist/superhero/bootstrap.min.css";
+import "./components/config.css";
 
 import App from "./App";
 

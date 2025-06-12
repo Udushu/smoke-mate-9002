@@ -1,6 +1,16 @@
+export interface TemperatureProfileStep {
+  temperatureStartF: number;
+  temperatureEndF: number;
+  timeMSec: number;
+  type: number | string; // Use number if backend sends enum as int, or string if as text
+}
+
 export interface DeviceConfig {
   temperatureTarget: number;
   temperatureIntervalMSec: number;
+  isTemperatureProfilingEnabled: boolean;
+  temperatureProfileStepsCount: number;
+  temperatureProfile: TemperatureProfileStep[];
   isPIDEnabled: boolean;
   kP: number;
   kI: number;
@@ -21,12 +31,16 @@ export interface DeviceConfig {
   isForcedDoorPosition: boolean;
   forcedDoorPosition: number;
   isWiFiEnabled: boolean;
-  wifiSSID: string;
+
+  // wifiPassword?: string; // Uncomment if you want to handle password in frontend
 }
 
 export const defaultDeviceConfig: DeviceConfig = {
   temperatureTarget: 0,
   temperatureIntervalMSec: 0,
+  isTemperatureProfilingEnabled: false,
+  temperatureProfileStepsCount: 0,
+  temperatureProfile: [],
   isPIDEnabled: false,
   kP: 0,
   kI: 0,
@@ -47,5 +61,6 @@ export const defaultDeviceConfig: DeviceConfig = {
   isForcedDoorPosition: false,
   forcedDoorPosition: 0,
   isWiFiEnabled: false,
-  wifiSSID: "",
+
+  // wifiPassword: "", // Uncomment if you want to handle password in frontend
 };

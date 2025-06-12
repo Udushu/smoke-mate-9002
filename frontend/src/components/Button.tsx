@@ -13,6 +13,7 @@ const InstrumentButton: React.FC<InstrumentButtonProps> = ({
   ...props
 }) => (
   <button
+    type="button"
     className={`instrument-button${active ? " instrument-button-active" : ""}`}
     {...props}
   >

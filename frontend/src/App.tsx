@@ -5,14 +5,16 @@ import { StatusBar } from "./components/StatusBar";
 import TemperatureBar from "./components/TemperatureBar";
 import TemperatureHistoryChart from "./components/TemperatureHistoryChart";
 import Button from "./components/Button";
+import ConfigEditor from "./components/ConfigEditor";
 
 const BACKEND_URL = "http://localhost:5000";
 const BACKEND_POLLING_INTERVAL = 250; // 0.25 second
 
 const App: React.FC = () => {
   const [status, setStatus] = useState<DeviceStatus>(defaultDeviceStatus);
-  const [history, setHistory] = useState<DeviceStatus[]>([]); // Placeholder for run status history
+  const [history, setHistory] = useState<DeviceStatus[]>([]);
   const [config, setConfig] = useState<DeviceConfig>(defaultDeviceConfig);
+  const [showConfig, setShowConfig] = useState(false);
 
   // Fetch the device status every second to update the UI in real-time
   useEffect(() => {
@@ -52,7 +54,8 @@ const App: React.FC = () => {
             temperatureError: data.temperatureError,
             isProfileRunning: data.isProfileRunning,
             temperatureProfileStepIndex: data.temperatureProfileStepIndex,
-            temperatureProfileStartTimeMSec: data.temperatureProfileStartTimeMSec,
+            temperatureProfileStartTimeMSec:
+              data.temperatureProfileStartTimeMSec,
             temperatureProfileStepsCount: data.temperatureProfileStepsCount,
             temperatureProfileStepType: data.temperatureProfileStepType,
           };
@@ -67,7 +70,7 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch the device status every second to update the UI in real-time
+  // Fetch the device config every second to update the UI in real-time
   useEffect(() => {
     // Fetch the device status every second
     const interval = setInterval(() => {
@@ -83,11 +86,20 @@ const App: React.FC = () => {
           return response.json();
         })
         .then((data) => {
-          // Set the device status and update the state
-          // Unpack the data.status into DeviceStatus object
-          const deviceDonfig: DeviceConfig = {
+          // Unpack the data into DeviceConfig object
+          const deviceConfig: DeviceConfig = {
             temperatureTarget: data.temperatureTarget,
             temperatureIntervalMSec: data.temperatureIntervalMSec,
+            isTemperatureProfilingEnabled: data.isTemperatureProfilingEnabled,
+            temperatureProfileStepsCount: data.temperatureProfileStepsCount,
+            temperatureProfile: Array.isArray(data.temperatureProfile)
+              ? data.temperatureProfile.map((step: any) => ({
+                  temperatureStartF: step.temperatureStartF,
+                  temperatureEndF: step.temperatureEndF,
+                  timeMSec: step.timeMSec,
+                  type: step.type,
+                }))
+              : [],
             isPIDEnabled: data.isPIDEnabled,
             kP: data.kP,
             kI: data.kI,
@@ -108,9 +120,8 @@ const App: React.FC = () => {
             isForcedDoorPosition: data.isForcedDoorPosition,
             forcedDoorPosition: data.forcedDoorPosition,
             isWiFiEnabled: data.isWiFiEnabled,
-            wifiSSID: data.wifiSSID,
           };
-          setConfig(deviceDonfig);
+          setConfig(deviceConfig);
         })
         .catch((error) => console.log("Error:", error));
     }, BACKEND_POLLING_INTERVAL); // Fetch every 1 second
@@ -180,6 +191,20 @@ const App: React.FC = () => {
     }
   };
 
+  const handleConfigSave = async (newConfig: DeviceConfig) => {
+    try {
+      await fetch(BACKEND_URL + "/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newConfig),
+      });
+      // Optionally update local state
+      setConfig(newConfig);
+    } catch (error) {
+      console.error("Failed to save config:", error);
+    }
+  };
+
   return (
     <div className="container mt-5">
       <h1 className="text-primary">SmokeMate</h1>
@@ -193,7 +218,6 @@ const App: React.FC = () => {
         <TemperatureHistoryChart history={history} />
       </div>
       <div className="row justify-content-center">
-        {" "}
         <p />
       </div>
       <div className="row justify-content-center">
@@ -204,6 +228,16 @@ const App: React.FC = () => {
           {status.isRunning ? "Stop Controller" : "Start Controller"}
         </Button>
       </div>
+      <div className="row justify-content-center mt-3">
+        <Button active={showConfig} onClick={() => setShowConfig((v) => !v)}>
+          {showConfig ? "Hide Configuration" : "Edit Configuration"}
+        </Button>
+      </div>
+      {showConfig && (
+        <div className="row justify-content-center mt-3">
+          <ConfigEditor config={config} onSave={handleConfigSave} />
+        </div>
+      )}
     </div>
   );
 };

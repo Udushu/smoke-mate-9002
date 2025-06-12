@@ -1,0 +1,103 @@
+/* General input group styling for industrial look */
+.input-group,
+.input-group-text,
+.form-control,
+.form-select {
+  background-color: #3a4656 !important;
+  color: #f8f8f2 !important;
+  border: 1px solid #444c5e !important;
+  font-family: 'DSEG7ClassicMini', 'Consolas', 'monospace', monospace;
+  font-size: 1.2rem;
+  box-shadow: none !important;
+}
+
+.input-group {
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  min-height: 48px;
+}
+
+.input-group-text {
+  background-color: #4b5668 !important;
+  color: #fffbe7 !important;
+  font-weight: bold;
+  border-radius: 8px 0 0 8px;
+  min-width: 120px;
+  justify-content: flex-start;
+  border-right: 0 !important;
+}
+
+.form-control,
+.form-select {
+  background-color: #232b36 !important;
+  color: #f8f8f2 !important;
+  border-radius: 0 8px 8px 0;
+  border-left: 0 !important;
+  min-width: 80px;
+  height: 48px;
+  font-size: 1.2rem;
+}
+
+.form-select {
+  min-width: 110px;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  appearance: textfield;
+}
+
+/* Checkbox switch styling for industrial look */
+.form-check-input[type="checkbox"] {
+  width: 2.2em;
+  height: 1.2em;
+  background-color: #232b36;
+  border: 1px solid #888;
+  border-radius: 1em;
+  transition: background 0.2s, border 0.2s;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.2);
+  margin-top: 0.3em;
+}
+
+.form-check-input[type="checkbox"]:checked {
+  background-color: #ff9800;
+  border-color: #ff9800;
+}
+
+.form-check-input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 1px #ff9800;
+}
+
+.form-check.form-switch .form-check-input {
+  margin-left: 0.5em;
+}
+
+.form-label {
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  color: #fffbe7;
+}
+
+/* TemperatureProfileStepField specific tweaks */
+.input-group-text {
+  min-width: 60px;
+  text-align: center;
+}
+
+.input-group input,
+.input-group select {
+  text-align: right;
+}
+
+/* Optional: Add a subtle inset shadow for depth */
+.input-group,
+.form-control,
+.form-select {
+  box-shadow: inset 0 1px 3px #222;
+}
