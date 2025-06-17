@@ -618,4 +618,6 @@ int calculateTemperatureTarget()
       }
     }
   }
+
+  return 0; // Fallback return value, should not be reached
 }
