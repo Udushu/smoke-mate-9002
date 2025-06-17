@@ -83,9 +83,7 @@ void setup()
   }
 
   // Initialize the blower motor
-  g_blowerMotor.setID("Blower");
   g_blowerMotor.setPWM(0);
-  g_blowerMotor.stop(); // Start with blower motor stopped
 
   // Initalize the interface
   g_smokeMateGUI.begin();
@@ -126,8 +124,9 @@ void loop()
   g_thermometerSmoker.service(g_loopCurrentTimeMSec);
   g_thermometerFood.service(g_loopCurrentTimeMSec);
 
-  // Service the door
+  // Service the door and blower
   g_door.service(g_loopCurrentTimeMSec);
+  g_blowerMotor.service(g_loopCurrentTimeMSec);
 
   loopServiceKnobButtonEvents();
   loopUpdateControllerStatus();
@@ -141,7 +140,6 @@ void loop()
     {
       // Stop the blower motor
       g_blowerMotor.setPWM(0);
-      g_blowerMotor.stop();
       // Close the door
       g_door.close();
     }

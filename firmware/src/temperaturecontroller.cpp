@@ -80,19 +80,16 @@ void TemperatureController::serviceBangBangController(int currentTempF, int targ
     case BANGBANG_STATE_IDLE:
         // If the state is IDLE, stop the blower and set door position
         m_blower.setPWM(0);
-        m_blower.stop();
         m_door.open();
         break;
     case BANGBANG_STATE_HEAT:
         // If the state is HEAT, start the blower and open the door
         m_blower.setPWM(m_config.bangBangFanSpeed);
-        m_blower.start();
         m_door.open();
         break;
     case BANGBANG_STATE_COOL:
         // If the state is COOL, stop the blower and close the door
         m_blower.setPWM(0);
-        m_blower.stop();
         m_door.close();
         break;
     default:
@@ -119,7 +116,6 @@ void TemperatureController::servicePIDController(int currentTempF, int targetTem
         // Truncate the control output to the range of 0-255
         controlOutput = constrain(controlOutput, 0, 255);
         m_blower.setPWM(controlOutput);
-        m_blower.start();
         m_door.open();
     }
     else
@@ -127,15 +123,8 @@ void TemperatureController::servicePIDController(int currentTempF, int targetTem
 #ifdef DEBUG_TEMPERATURE_CONTROLLER
         DEBUG_PRINTLN("TC::PID - COOLING");
 #endif
-        // Make sure that the control output is not negative
-        // controlOutput = abs(controlOutput);
-        // controlOutput = constrain(controlOutput, 0, 100);
-        // controlOutput = map(controlOutput, 0, 100, m_config.doorOpenPosition, m_config.doorClosePosition);
-        // controlOutput = constrain(controlOutput, m_config.doorClosePosition, m_config.doorOpenPosition);
-        // m_blower.stop();
-        // m_door.setPosition(controlOutput);
+        // If the control output is less than or equal to 0, stop the blower and close the door
         m_blower.setPWM(0);
-        m_blower.stop();
         m_door.close();
     }
 }
