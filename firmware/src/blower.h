@@ -3,6 +3,9 @@
 
 #include <Arduino.h>
 #include "types.h"
+#include "debug.h"
+
+// #define DEBUG_BLOWER
 
 enum BlowerState
 {
@@ -13,7 +16,7 @@ enum BlowerState
     BLOWER_STATE_STOPPING,
 };
 
-#define BLOWER_MIN_PWM 70
+#define BLOWER_MIN_PWM 85
 #define BLOWER_MAX_PWM 255
 #define BLOWER_LOW_PWM_DUTY_CYCLE_MSEC 500 // Blower interval in milliseconds when running at low speed
 
@@ -25,6 +28,7 @@ private:
     uint m_pinPWM;               // Pin for controlling PWM speed
     uint m_pinEnb;               // Pin for enabling the motor
     BlowerState m_state;         // Current state of the blower
+    BlowerState m_prevState;     // Previous state of the blower for state transitions
     uint m_demandedPWM;          // Current demanded PWM value for the blower
     uint m_actualPWM;            // Actual PWM value being applied to the blower
     ulong m_blowerOnTimeMSec;    // Time for the blower to be active in millisconds at low speeds
