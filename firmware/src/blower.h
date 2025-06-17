@@ -4,8 +4,6 @@
 #include <Arduino.h>
 #include "types.h"
 
-#define DEBUG_MOTOR
-
 enum BlowerState
 {
     BLOWER_STATE_IDLE,
@@ -19,8 +17,6 @@ enum BlowerState
 class Blower
 {
 private:
-    // motor id string of 12 char for debugging
-    char m_id[13];
     uint m_pinA;
     uint m_pinB;
     uint m_pinPWM;
@@ -37,7 +33,6 @@ public:
     BlowerState getState();
     void setPWM(uint pwm);
     uint getPWM();
-    void setID(const char *id);
 };
 
 #endif
