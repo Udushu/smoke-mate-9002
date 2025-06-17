@@ -7,7 +7,7 @@ import TemperatureHistoryChart from "./components/TemperatureHistoryChart";
 import Button from "./components/Button";
 import ConfigEditor from "./components/ConfigEditor";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "http://192.168.2.157:5000";
 const BACKEND_POLLING_INTERVAL = 250; // 0.25 second
 
 const App: React.FC = () => {
