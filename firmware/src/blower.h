@@ -13,6 +13,9 @@ enum BlowerState
     BLOWER_STATE_STOPPED,
 };
 
+#define BLOWER_MIN_PWM 70
+#define BLOWER_MAX_PWM 255
+
 class Blower
 {
 private:

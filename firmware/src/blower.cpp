@@ -45,25 +45,12 @@ void Blower::stop()
     Serial.print(" Motor::close() -> PWM:");
     Serial.println(m_pwm);
 #endif
-    digitalWrite(m_pinEnb, LOW); // Enable the motor
+    digitalWrite(m_pinEnb, LOW); // Disable the motor
     analogWrite(m_pinPWM, m_pwm);
     digitalWrite(m_pinA, LOW);
     digitalWrite(m_pinB, HIGH);
     m_state = BLOWER_STATE_STOPPED;
 }
-
-// void Blower::stop()
-// {
-// #ifdef DEBUG_MOTOR
-//     // Print motor id string and function name
-//     Serial.print(m_id);
-//     Serial.println(" Motor::stop()");
-// #endif
-//     analogWrite(m_pinPWM, 0);
-//     digitalWrite(m_pinA, LOW);
-//     digitalWrite(m_pinB, LOW);
-//     m_state = BLOWER_STATE_IDLE;
-// }
 
 BlowerState Blower::getState()
 {
@@ -77,6 +64,7 @@ void Blower::setPWM(uint pwm)
     Serial.print(" Motor::setPWM() -> PWM:");
     Serial.println(pwm);
 #endif
+    pwm = constrain(pwm, BLOWER_MIN_PWM, BLOWER_MAX_PWM);
     m_pwm = pwm;
 }
 
