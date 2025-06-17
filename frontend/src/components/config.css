@@ -7,7 +7,7 @@
   color: #f8f8f2 !important;
   border: 1px solid #444c5e !important;
   font-family: 'DSEG7ClassicMini', 'Consolas', 'monospace', monospace;
-  font-size: 1.2rem;
+  font-size: 0.8rem;
   box-shadow: none !important;
 }
 
@@ -35,7 +35,7 @@
   border-left: 0 !important;
   min-width: 80px;
   height: 48px;
-  font-size: 1.2rem;
+  font-size: 0.8rem;
 }
 
 .form-select {
@@ -79,7 +79,7 @@ input[type="number"] {
 }
 
 .form-label {
-  font-size: 1.1rem;
+  font-size: 0.8rem;
   letter-spacing: 0.05em;
   color: #fffbe7;
 }
