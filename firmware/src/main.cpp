@@ -168,6 +168,11 @@ void loop()
     g_door.setPosition(g_configuration.forcedDoorPosition); // Set the door position if forced
   }
 
+  if (!g_controllerStatus.isRunning && g_configuration.isForcedFanPWM)
+  {
+    g_blowerMotor.setPWM(g_configuration.forcedFanPWM); // Set the blower motor PWM if forced
+  }
+
   // Check nvram save request
   if (g_webServer.isNVRAMSaveRequired())
   {
