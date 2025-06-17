@@ -8,7 +8,7 @@
 #include "blower.h"
 #include "door.h"
 
-#define DEBUG_TEMPERATURE_CONTROLLER
+// #define DEBUG_TEMPERATURE_CONTROLLER
 
 enum ControlAlgorithm
 {
