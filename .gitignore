@@ -39,9 +39,7 @@ SN*
 *.ipynb
 
 # Images
-*.png
-*.fig
-*.bmp
+
 
 # Training data
 SN *
