@@ -90,6 +90,9 @@ struct Configuration
     bool isWiFiEnabled;    // Flag to indicate if WiFi is enabled
     char wifiSSID[65];     // WiFi SSID
     char wifiPassword[65]; // WiFi Password
+
+    bool isTemperatureFilterEnabled; // Flag to indicate if the temperature filter is enabled
+    float temperatureFilterCoeff;    // Coefficient for the temperature filter (0.0 - 1.0)
 };
 
 #endif // TYPES_H

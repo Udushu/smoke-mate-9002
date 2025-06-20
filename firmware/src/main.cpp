@@ -47,6 +47,8 @@ int g_wiFiConnectAttempts = MAX_WIFI_CONNECT_ATTEMPTS; // Maximum number of atte
 int g_temperatureProfileStepIndex = -1;      // Current step index in the temperature profile, -1 means no active profile
 ulong g_temperatureProfileStartTimeMSec = 0; // Start time of the current temperature profile step
 
+Filter g_temperatureFilter(FilterType::NONE, DEFAULT_TEMPERATURE_FILTER_COEFF, 0.0f); // Temperature filter
+
 void setup()
 {
 
@@ -159,7 +161,7 @@ void loop()
     // Update the target temperature
     g_controllerStatus.temperatureTarget = calculateTemperatureTarget();
     // If the controller is not running, we still want to update the temperature
-    g_temperatureController.service(g_thermometerSmoker.getTemperatureF(), g_loopCurrentTimeMSec);
+    g_temperatureController.service(g_temperatureFilter.update(g_thermometerSmoker.getTemperatureF()), g_loopCurrentTimeMSec);
     g_controllerStatus.temperatureError = g_temperatureController.getLastOutput(); // Get the last output from the temperature controller
   }
 
@@ -286,6 +288,8 @@ void updateConfiguration()
 {
   g_thermometerSmoker.setSimulated(g_configuration.isThemometerSimulated);
   g_thermometerFood.setSimulated(g_configuration.isThemometerSimulated);
+  g_temperatureFilter.setType(g_configuration.isTemperatureFilterEnabled ? FilterType::EWMA : FilterType::NONE,
+                              g_configuration.temperatureFilterCoeff);
 }
 
 void loopUpdateControllerStatus()
@@ -399,6 +403,9 @@ void loadDefaultConfiguration(Configuration *ptr_configuration)
   ptr_configuration->wifiSSID[sizeof(ptr_configuration->wifiSSID) - 1] = '\0';
   strncpy(ptr_configuration->wifiPassword, NETWORK_PASSWORD, sizeof(ptr_configuration->wifiPassword) - 1); // Default password
   ptr_configuration->wifiPassword[sizeof(ptr_configuration->wifiPassword) - 1] = '\0';
+
+  ptr_configuration->isTemperatureFilterEnabled = DEFAULT_TEMPERATURE_FILTER_ENABLED; // Default temperature filter enabled
+  ptr_configuration->temperatureFilterCoeff = DEFAULT_TEMPERATURE_FILTER_COEFF;       // Default temperature filter coefficient
 }
 
 void setupInitializeNVRAM()

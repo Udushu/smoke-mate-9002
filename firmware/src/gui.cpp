@@ -182,6 +182,31 @@ void decDoorClosePos(Configuration &c)
         c.doorClosePosition -= 1;
 }
 
+// TEMPERATURE FILTER ENABLE SWITCH ============================================================
+static String getIsTemperatureFilterEnabled(const Configuration &c) { return c.isTemperatureFilterEnabled ? "Yes" : "No"; }
+void incIsTemperatureFilterEnabled(Configuration &c) { c.isTemperatureFilterEnabled = !c.isTemperatureFilterEnabled; }
+void decIsTemperatureFilterEnabled(Configuration &c) { c.isTemperatureFilterEnabled = !c.isTemperatureFilterEnabled; }
+
+// TEMPERATURE FILTER COEFFICIENT ================================================================
+static String getTemperatureFilterCoeff(const Configuration &c)
+{
+    return String(c.temperatureFilterCoeff, 2); // Display with 2 decimal places
+}
+void incTemperatureFilterCoeff(Configuration &c)
+{
+    if (c.temperatureFilterCoeff + 0.01f <= 1.0f)
+        c.temperatureFilterCoeff += 0.05f;
+    else
+        c.temperatureFilterCoeff = 1.0f; // Cap at 1.0
+}
+void decTemperatureFilterCoeff(Configuration &c)
+{
+    if (c.temperatureFilterCoeff - 0.01f >= 0.0f)
+        c.temperatureFilterCoeff -= 0.05f;
+    else
+        c.temperatureFilterCoeff = 0.0f; // Cap at 0.0
+}
+
 // SMOKER THEMOMETER CALIBRATION - GAIN ===========================================================
 static String getSmokerGain(const Configuration &c) { return String(c.themometerSmokerGain, 2); }
 void incSmokerGain(Configuration &c) { c.themometerSmokerGain += 0.01f; }
@@ -273,6 +298,9 @@ static const SettingItem SETTINGS_LIST[] = {
 
     {"Door Open Pos", getDoorOpenPos, incDoorOpenPos, decDoorOpenPos},
     {"Door Close Pos", getDoorClosePos, incDoorClosePos, decDoorClosePos},
+
+    {"Temp Filter", getIsTemperatureFilterEnabled, incIsTemperatureFilterEnabled, decIsTemperatureFilterEnabled},
+    {"Temp Filter Coeff", getTemperatureFilterCoeff, incTemperatureFilterCoeff, decTemperatureFilterCoeff},
 
     {"T_smoker Gain", getSmokerGain, incSmokerGain, decSmokerGain},
     {"T_smoker Offset", getSmokerOffset, incSmokerOffset, decSmokerOffset},

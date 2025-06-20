@@ -18,6 +18,7 @@
 #include "tftdebug.h"
 #include "debug.h"
 #include "webserver.h"
+#include "filtering.h"
 
 // ============================ DEFAULT PASSWORDS =========================
 #if __has_include("passwords.h")
@@ -51,11 +52,13 @@
 #define DEFAULT_DOOR_CLOSE_POSITION 4
 #define DEFAULT_PID_KP 4.0
 #define DEFAULT_PID_KI 0.0
-#define DEFAULT_PID_KD 0.0
+#define DEFAULT_PID_KD 1.0
 #define DEFAULT_THERMOMETER_SMOKER_GAIN 1.0
 #define DEFAULT_THERMOMETER_SMOKER_OFFSET 0.0
 #define DEFAULT_THERMOMETER_FOOD_GAIN 1.0
 #define DEFAULT_THERMOMETER_FOOD_OFFSET 0.0
+#define DEFAULT_TEMPERATURE_FILTER_ENABLED false
+#define DEFAULT_TEMPERATURE_FILTER_COEFF 1.0
 
 // ============================ PIN ASSIGNMENTS ===========================
 #define PIN_LED 2
