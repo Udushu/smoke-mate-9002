@@ -207,7 +207,15 @@ const App: React.FC = () => {
 
   return (
     <div className="container mt-5">
-      <h1 className="text-primary">SmokeMate</h1>
+      <div className="d-flex align-items-center justify-content-left">
+        <img
+          src="icon.svg"
+          alt="Logo"
+          className="mb-3"
+          style={{ width: 80, height: 80 }}
+        />
+        <h1 className="text-primary">SmokeMate</h1>
+      </div>
       <StatusBar status={status} config={config} />
       <hr />
       <div className="row justify-content-center">
