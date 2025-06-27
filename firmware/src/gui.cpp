@@ -514,7 +514,8 @@ inline const char *guiStateHeaderToString(GUI_STATE_ACTIVE_HEADER state)
 // ========================================== PUBLIC METHODS ==========================================
 
 SmokeMateGUI::SmokeMateGUI(Adafruit_ST7789 &displayRef, Configuration &config) : m_tft(displayRef),
-                                                                                 m_config(config)
+                                                                                 m_config(config),
+                                                                                 m_tabPanel(displayRef, 0, 0, SCREEN_WIDTH, GUI_HEADER_HEIGHT)
 {
     // Initialize the GUI state
     m_guiState.header.state = GUI_STATE_HEADER_STATUS; // Start with the status header
@@ -545,6 +546,8 @@ void SmokeMateGUI::begin()
 
 void SmokeMateGUI::service(ulong currentTimeMSec)
 {
+    m_tabPanel.update(currentTimeMSec);
+    return;
 
     manageTempChartState(currentTimeMSec);
 

@@ -9,6 +9,8 @@
 #include "debug.h"
 #include <deque>
 
+#include "guitabpanel.h"
+
 // #define GUI_DEBUG
 
 // WIFI CONSTANTS =================================================================================
@@ -224,6 +226,8 @@ private:
     GuiState m_guiState;     // Current GUI state
     GuiState m_prevGuiState; // Previous GUI state for comparison
     Configuration &m_config; // Reference to the configuration object
+
+    GuiTabPanel m_tabPanel;
 
     std::vector<String> m_wifiNetworkSSIDs; // List of available WiFi networks
     std::vector<int> m_wifiNetworkRSSIs;    // RSSI values for the available networks
