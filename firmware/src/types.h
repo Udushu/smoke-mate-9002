@@ -93,6 +93,17 @@ struct Configuration
 
     bool isTemperatureFilterEnabled; // Flag to indicate if the temperature filter is enabled
     float temperatureFilterCoeff;    // Coefficient for the temperature filter (0.0 - 1.0)
+
+    // Add MQTT configuration
+    bool isMqttEnabled;       // Enable/disable MQTT
+    char mqttBroker[65];      // MQTT broker hostname/IP
+    int mqttPort;             // MQTT broker port (default 1883)
+    char mqttUsername[65];    // MQTT username (optional)
+    char mqttPassword[65];    // MQTT password (optional)
+    char mqttClientId[33];    // MQTT client ID
+    char mqttTopicPrefix[65]; // Base topic prefix (e.g., "smoker/kitchen")
+    int mqttPublishInterval;  // Publish interval in seconds
+    bool isMqttRetain;        // Retain published messages
 };
 
 #endif // TYPES_H

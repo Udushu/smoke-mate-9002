@@ -97,6 +97,11 @@
 #define GUI_SETTINGS_TEMP_PROFILE_DURATION_MAX 12 * 60 * 60 * 1000 // 12 hours in milliseconds
 #define GUI_SETTINGS_TEMP_PROFILE_DURATION_STEP 1 * 60 * 1000      // 1 minute in milliseconds
 
+// MQTT settings edit constants
+#define GUI_SETTINGS_MQTT_PUBLISH_INTERVAL_MIN 1 * 1000  // 1 second in milliseconds
+#define GUI_SETTINGS_MQTT_PUBLISH_INTERVAL_MAX 60 * 1000 // 60 seconds in milliseconds
+#define GUI_SETTINGS_MQTT_PUBLISH_INTERVAL_STEP 1 * 1000 // 1 second in milliseconds
+
 enum GUI_STATE_ACTIVE_HEADER
 {
     GUI_STATE_HEADER_STATUS,

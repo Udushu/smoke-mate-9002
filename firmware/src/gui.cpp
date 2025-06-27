@@ -276,6 +276,36 @@ static String getIsWifiEnabled(const Configuration &c) { return c.isWiFiEnabled 
 void incIsWifiEnabled(Configuration &c) { c.isWiFiEnabled = !c.isWiFiEnabled; }
 void decIsWifiEnabled(Configuration &c) { c.isWiFiEnabled = !c.isWiFiEnabled; }
 
+// MQTT ENABLE SWITCH ======================================================================
+static String getIsMqttEnabled(const Configuration &c) { return c.isMqttEnabled ? "Yes" : "No"; }
+void incIsMqttEnabled(Configuration &c) { c.isMqttEnabled = !c.isMqttEnabled; }
+void decIsMqttEnabled(Configuration &c) { c.isMqttEnabled = !c.isMqttEnabled; }
+
+// MQTT PUBLISH INTERVAL ======================================================================
+static String getMqttPublishInterval(const Configuration &c)
+{
+    return String(c.mqttPublishInterval) + " sec";
+}
+void incMqttPublishInterval(Configuration &c)
+{
+    if (c.mqttPublishInterval + GUI_SETTINGS_MQTT_PUBLISH_INTERVAL_STEP <= GUI_SETTINGS_MQTT_PUBLISH_INTERVAL_MAX)
+        c.mqttPublishInterval += GUI_SETTINGS_MQTT_PUBLISH_INTERVAL_STEP;
+    else
+        c.mqttPublishInterval = GUI_SETTINGS_MQTT_PUBLISH_INTERVAL_MAX;
+}
+void decMqttPublishInterval(Configuration &c)
+{
+    if (c.mqttPublishInterval - GUI_SETTINGS_MQTT_PUBLISH_INTERVAL_STEP >= GUI_SETTINGS_MQTT_PUBLISH_INTERVAL_MIN)
+        c.mqttPublishInterval -= GUI_SETTINGS_MQTT_PUBLISH_INTERVAL_STEP;
+    else
+        c.mqttPublishInterval = GUI_SETTINGS_MQTT_PUBLISH_INTERVAL_MIN;
+}
+
+// MQTT RETAIN ENABLE SWITCH ======================================================================
+static String getIsMqttRetainEnabled(const Configuration &c) { return c.isMqttRetain ? "Yes" : "No"; }
+void incIsMqttRetainEnabled(Configuration &c) { c.isMqttRetain = !c.isMqttRetain; }
+void decIsMqttRetainEnabled(Configuration &c) { c.isMqttRetain = !c.isMqttRetain; }
+
 const char *WIFI_CHAR_SET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
 const int wifiCharSetLen = strlen(WIFI_CHAR_SET);
 
@@ -313,6 +343,10 @@ static const SettingItem SETTINGS_LIST[] = {
     {"Forced Fan PWM", getForcedFanPWM, incForcedFanPWM, decForcedFanPWM},
     {"Manual Door", getIsForcedDoor, incIsForcedDoor, decIsForcedDoor},
     {"Forced Door Pos", getForcedDoorPos, incForcedDoorPos, decForcedDoorPos},
+
+    {"Enable MQTT", getIsMqttEnabled, incIsMqttEnabled, decIsMqttEnabled},
+    {"MQTT Publish Interval", getMqttPublishInterval, incMqttPublishInterval, decMqttPublishInterval},
+    {"MQTT Retain", getIsMqttRetainEnabled, incIsMqttRetainEnabled, decIsMqttRetainEnabled},
 
     {"Enable WiFi", getIsWifiEnabled, incIsWifiEnabled, decIsWifiEnabled},
     {"WiFi SSID", nullptr, nullptr, nullptr},

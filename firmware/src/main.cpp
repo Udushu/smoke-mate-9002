@@ -406,6 +406,21 @@ void loadDefaultConfiguration(Configuration *ptr_configuration)
 
   ptr_configuration->isTemperatureFilterEnabled = DEFAULT_TEMPERATURE_FILTER_ENABLED; // Default temperature filter enabled
   ptr_configuration->temperatureFilterCoeff = DEFAULT_TEMPERATURE_FILTER_COEFF;       // Default temperature filter coefficient
+
+  ptr_configuration->isMqttEnabled = DEFAULT_MQTT_ENABLED;                                                // Default MQTT enabled
+  strncpy(ptr_configuration->mqttBroker, DEFAULT_MQTT_BROKER, sizeof(ptr_configuration->mqttBroker) - 1); // Default MQTT broker
+  ptr_configuration->mqttBroker[sizeof(ptr_configuration->mqttBroker) - 1] = '\0';
+  ptr_configuration->mqttPort = DEFAULT_MQTT_PORT;                                                              // Default MQTT port
+  strncpy(ptr_configuration->mqttUsername, DEFAULT_MQTT_USERNAME, sizeof(ptr_configuration->mqttUsername) - 1); // Default MQTT username
+  ptr_configuration->mqttUsername[sizeof(ptr_configuration->mqttUsername) - 1] = '\0';
+  strncpy(ptr_configuration->mqttPassword, DEFAULT_MQTT_PASSWORD, sizeof(ptr_configuration->mqttPassword) - 1); // Default MQTT password
+  ptr_configuration->mqttPassword[sizeof(ptr_configuration->mqttPassword) - 1] = '\0';
+  strncpy(ptr_configuration->mqttClientId, DEFAULT_MQTT_CLIENT_ID, sizeof(ptr_configuration->mqttClientId) - 1); // Default MQTT client ID
+  ptr_configuration->mqttClientId[sizeof(ptr_configuration->mqttClientId) - 1] = '\0';
+  strncpy(ptr_configuration->mqttTopicPrefix, DEFAULT_MQTT_TOPIC_PREFIX, sizeof(ptr_configuration->mqttTopicPrefix) - 1); // Default MQTT topic prefix
+  ptr_configuration->mqttTopicPrefix[sizeof(ptr_configuration->mqttTopicPrefix) - 1] = '\0';
+  ptr_configuration->mqttPublishInterval = DEFAULT_MQTT_PUBLISH_INTERVAL; // Default MQTT publish interval
+  ptr_configuration->isMqttRetain = DEFAULT_MQTT_RETAIN;                  // Default MQTT retain flag
 }
 
 void setupInitializeNVRAM()
