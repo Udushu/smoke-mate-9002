@@ -19,6 +19,7 @@
 #include "debug.h"
 #include "webserver.h"
 #include "filtering.h"
+#include "mqttclient.h"
 
 // ============================ DEFAULT PASSWORDS =========================
 #if __has_include("passwords.h")
@@ -60,13 +61,13 @@
 #define DEFAULT_TEMPERATURE_FILTER_ENABLED false
 #define DEFAULT_TEMPERATURE_FILTER_COEFF 1.0
 #define DEFAULT_MQTT_ENABLED false
-#define DEFAULT_MQTT_BROKER "SmokeMate"
+#define DEFAULT_MQTT_BROKER "192.168.2.160" // Default MQTT broker hostname
 #define DEFAULT_MQTT_PORT 1883
-#define DEFAULT_MQTT_USERNAME ""
-#define DEFAULT_MQTT_PASSWORD ""
-#define DEFAULT_MQTT_CLIENT_ID "smoke-mate-9002"
-#define DEFAULT_MQTT_TOPIC_PREFIX "smoker"
-#define DEFAULT_MQTT_PUBLISH_INTERVAL 5 // in seconds
+#define DEFAULT_MQTT_USERNAME "smokemate"           // Default MQTT username
+#define DEFAULT_MQTT_PASSWORD "12345678"            // Default MQTT password
+#define DEFAULT_MQTT_CLIENT_ID "smokemate"          // Default MQTT client ID
+#define DEFAULT_MQTT_TOPIC_PREFIX "smoker/backyard" // Default MQTT topic prefix
+#define DEFAULT_MQTT_PUBLISH_INTERVAL 10            // in seconds
 #define DEFAULT_MQTT_RETAIN true
 
 // ============================ PIN ASSIGNMENTS ===========================

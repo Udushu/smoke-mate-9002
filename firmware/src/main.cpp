@@ -49,6 +49,9 @@ ulong g_temperatureProfileStartTimeMSec = 0; // Start time of the current temper
 
 Filter g_temperatureFilter(FilterType::NONE, DEFAULT_TEMPERATURE_FILTER_COEFF, 0.0f); // Temperature filter
 
+// MQTT client
+SmokeMatesMqttClient g_mqttClient(g_configuration, g_controllerStatus);
+
 void setup()
 {
 
@@ -103,6 +106,28 @@ void setup()
     {
       DEBUG_PRINTLN("WiFi connected successfully.");
       g_webServer.begin(); // Start the web server
+
+      if (g_configuration.isMqttEnabled)
+      {
+        // Set MQTT broker to "test.mosquitto.org" for testing
+
+        strncpy(g_configuration.mqttBroker, DEFAULT_MQTT_BROKER, sizeof(g_configuration.mqttBroker) - 1);
+        g_configuration.mqttBroker[sizeof(g_configuration.mqttBroker) - 1] = '\0';
+
+        strncpy(g_configuration.mqttClientId, DEFAULT_MQTT_CLIENT_ID, sizeof(g_configuration.mqttClientId) - 1);
+        g_configuration.mqttClientId[sizeof(g_configuration.mqttClientId) - 1] = '\0';
+
+        strncpy(g_configuration.mqttTopicPrefix, DEFAULT_MQTT_TOPIC_PREFIX, sizeof(g_configuration.mqttTopicPrefix) - 1);
+        g_configuration.mqttTopicPrefix[sizeof(g_configuration.mqttTopicPrefix) - 1] = '\0';
+        g_configuration.mqttPublishInterval = DEFAULT_MQTT_PUBLISH_INTERVAL; // Set default publish interval
+
+        strncpy(g_configuration.mqttUsername, DEFAULT_MQTT_USERNAME, sizeof(g_configuration.mqttUsername) - 1);
+        g_configuration.mqttUsername[sizeof(g_configuration.mqttUsername) - 1] = '\0';
+        strncpy(g_configuration.mqttPassword, DEFAULT_MQTT_PASSWORD, sizeof(g_configuration.mqttPassword) - 1);
+        g_configuration.mqttPassword[sizeof(g_configuration.mqttPassword) - 1] = '\0';
+
+        g_mqttClient.begin();
+      }
     }
   }
 
@@ -129,6 +154,12 @@ void loop()
   // Service the door and blower
   g_door.service(g_loopCurrentTimeMSec);
   g_blowerMotor.service(g_loopCurrentTimeMSec);
+
+  // Service the mqtt client
+  if (g_configuration.isMqttEnabled && g_controllerStatus.isWiFiConnected)
+  {
+    g_mqttClient.service(g_loopCurrentTimeMSec);
+  }
 
   loopServiceKnobButtonEvents();
   loopUpdateControllerStatus();
